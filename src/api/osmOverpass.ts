@@ -9,6 +9,10 @@ interface OSMElement {
     lat: number;
     lon: number;
   };
+  geometry?: Array<{
+    lat: number;
+    lon: number;
+  }>;
   tags?: {
     name?: string;
     'sport:climbing'?: string;
@@ -36,6 +40,7 @@ export interface OSMCrag {
   osmType: string;
   rockType: string | null;
   rockTagName: string | null;
+  geometry: Array<{ lat: number; lon: number }> | null;
 }
 
 function parseAspect(orientation: string | undefined): number | null {
@@ -152,6 +157,8 @@ function elementToCrag(element: OSMElement): OSMCrag | null {
 
   const { rockType, rockTagName } = extractRockType(element.tags);
 
+  const geometry = element.geometry && element.geometry.length >= 2 ? element.geometry : null;
+
   return {
     name: element.tags.name,
     latitude: lat,
@@ -163,6 +170,7 @@ function elementToCrag(element: OSMElement): OSMCrag | null {
     osmType: element.type,
     rockType,
     rockTagName,
+    geometry,
   };
 }
 
@@ -179,7 +187,7 @@ export async function fetchClimbingCragsInBounds(
       way["sport"="climbing"](${south},${west},${north},${east});
       relation["sport"="climbing"](${south},${west},${north},${east});
     );
-    out center;
+    out center geom;
   `;
 
   const response = await fetch(OVERPASS_API, {

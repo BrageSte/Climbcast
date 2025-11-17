@@ -29,7 +29,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "import-osm": "tsx src/scripts/importOSMCrags.ts",
-    "calculate-aspects": "tsx src/scripts/calculateMissingAspects.ts"
+    "calculate-aspects": "tsx src/scripts/calculateMissingAspects.ts",
+    "recalculate-aspects": "tsx src/scripts/recalculateAllAspects.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

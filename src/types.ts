@@ -12,6 +12,8 @@ export interface Crag {
   rock_source: string | null;
   rock_confidence: number | null;
   rock_raw: string | null;
+  wall_geometry: Array<{ lat: number; lon: number }> | null;
+  aspect_calculation_method: 'osm_tag' | 'geometry' | 'cliff_detection' | 'terrain' | null;
   created_at: string;
 }
 

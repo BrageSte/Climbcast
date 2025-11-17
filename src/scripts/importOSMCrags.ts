@@ -42,6 +42,8 @@ async function importCrags() {
       region: 'Norway',
       description: crag.description,
       source: 'osm',
+      wall_geometry: crag.geometry,
+      aspect_calculation_method: crag.aspect ? 'osm_tag' : null,
     }));
 
     const { error } = await supabase

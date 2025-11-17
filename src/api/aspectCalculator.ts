@@ -4,6 +4,8 @@ export interface AspectResult {
   aspectDeg: number;
   aspectDir: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
   provider: string;
+  method?: 'osm_tag' | 'geometry' | 'cliff_detection' | 'terrain';
+  confidence?: number;
 }
 
 export interface AspectError {
@@ -16,6 +18,7 @@ const ASPECT_CALCULATOR_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1
 export async function calculateAspect(
   latitude: number,
   longitude: number,
+  geometry?: Array<{ lat: number; lon: number }> | null,
   provider: 'opentopodata' = 'opentopodata'
 ): Promise<AspectResult> {
   const params = new URLSearchParams({
@@ -23,6 +26,10 @@ export async function calculateAspect(
     lon: longitude.toString(),
     provider,
   });
+
+  if (geometry && geometry.length >= 2) {
+    params.set('geometry', JSON.stringify(geometry));
+  }
 
   const url = `${ASPECT_CALCULATOR_URL}?${params.toString()}`;
 
