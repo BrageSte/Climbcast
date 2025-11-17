@@ -128,18 +128,23 @@ function calculateAspectFromGeometry(
     return null;
   }
 
-  const segments: Array<{ bearing: number; length: number }> = [];
+  // Vi regner vegg-normal, ikke retning langs linja.
+  // Antar OSM-lignende konvensjon: face på høyre side av linja => +90°
+  const segments: Array<{ aspect: number; length: number }> = [];
 
   for (let i = 0; i < geometry.length - 1; i++) {
     const point1 = geometry[i];
     const point2 = geometry[i + 1];
 
-    const bearing = calculateBearing(point1, point2);
+    const bearing = calculateBearing(point1, point2); // langs veggen
     const distance = calculateDistance(point1, point2);
 
     if (distance > 1) {
+      // Normal: 90° til høyre for linjeretningen
+      const normal = normalizeAngle(bearing + 90);
+
       segments.push({
-        bearing,
+        aspect: normal,
         length: distance
       });
     }
@@ -154,24 +159,29 @@ function calculateAspectFromGeometry(
   let sumX = 0;
   let sumY = 0;
 
+  // Vektet gjennomsnitt av normalene på enhetssirkelen
   for (const segment of segments) {
     const weight = segment.length / totalLength;
-    const radians = toRadians(segment.bearing);
+    const radians = toRadians(segment.aspect);
     sumX += Math.cos(radians) * weight;
     sumY += Math.sin(radians) * weight;
   }
 
-  const averageBearing = normalizeAngle(toDegrees(Math.atan2(sumY, sumX)));
+  const avgRad = Math.atan2(sumY, sumX);
+  let avgDeg = toDegrees(avgRad);
+  avgDeg = normalizeAngle(avgDeg);
 
-  const aspectDeg = Math.round(averageBearing);
+  const aspectDeg = Math.round(avgDeg);
   const aspectDir = degreesToDirection(aspectDeg);
 
+  // Varians beregnes også på normalene
   const variance = segments.reduce((sum, seg) => {
-    const diff = Math.abs(normalizeAngle(seg.bearing - averageBearing));
+    const diff = Math.abs(normalizeAngle(seg.aspect - avgDeg));
     const minDiff = Math.min(diff, 360 - diff);
     return sum + minDiff;
   }, 0) / segments.length;
 
+  // Enkel confidence: 1 → alle segment normals peker samme vei, 0 → helt kaos
   const confidence = Math.max(0, Math.min(1, 1 - (variance / 90)));
 
   return {
