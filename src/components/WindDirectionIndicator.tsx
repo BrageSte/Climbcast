@@ -99,6 +99,17 @@ export function WindDirectionIndicator({ windDirection, wallAspect, windSpeed }:
             />
 
             <line
+              x1="25"
+              y1="50"
+              x2="75"
+              y2="50"
+              stroke="#1e293b"
+              strokeWidth="5"
+              strokeLinecap="round"
+              transform={`rotate(${wallAspect} 50 50)`}
+            />
+
+            <line
               x1="50"
               y1="50"
               x2="50"
@@ -106,13 +117,13 @@ export function WindDirectionIndicator({ windDirection, wallAspect, windSpeed }:
               stroke={conditionColor.replace('text-', '')}
               strokeWidth="4"
               strokeLinecap="round"
-              transform={`rotate(${windDirection - wallAspect} 50 50)`}
+              transform={`rotate(${windDirection} 50 50)`}
             />
 
             <polygon
               points="50,5 45,15 55,15"
               fill={conditionColor.replace('text-', '')}
-              transform={`rotate(${windDirection - wallAspect} 50 50)`}
+              transform={`rotate(${windDirection} 50 50)`}
             />
 
             <circle cx="50" cy="50" r="6" fill="#1e293b" />

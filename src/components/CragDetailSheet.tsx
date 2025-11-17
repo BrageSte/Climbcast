@@ -134,8 +134,6 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
 
         {currentWeather && friction && (
           <div className="space-y-3 mt-3">
-            <AspectDisplay aspect={crag.aspect} size="medium" showLabel={true} />
-
             {wetness && <WetnessIndicator wetness={wetness} />}
 
             <FrictionScoreDisplay score={friction.score} label={friction.label} hasAspectData={friction.hasAspectData} />
