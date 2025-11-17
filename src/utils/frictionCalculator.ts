@@ -8,17 +8,21 @@ function calculateWindAspectScore(
   windDirection: number,
   wallAspect: number
 ): { score: number; reason: string } {
-  const aspectDiff = Math.abs(normalizeAngle(windDirection - wallAspect));
+  // Vi antar at wallAspect som kommer inn er "strike" (parallelt med veggen),
+  // og roterer +90° for å få normalen (retningen veggen "peker").
+  const wallNormal = normalizeAngle(wallAspect + 90);
+
+  const aspectDiff = Math.abs(normalizeAngle(windDirection - wallNormal));
   const minDiff = Math.min(aspectDiff, 360 - aspectDiff);
 
   if (minDiff >= 75 && minDiff <= 105) {
     return { score: 1.0, reason: 'Wind perpendicular to wall (optimal drying)' };
   } else if (minDiff >= 45 && minDiff <= 135) {
-    return { score: 0.7, reason: 'Good wind angle for drying' };
+    return { score: 0.8, reason: 'Good wind angle for drying' };
   } else if (minDiff >= 135 && minDiff <= 180) {
-    return { score: 0.3, reason: 'Wind from behind (poor drying)' };
+    return { score: 0.5, reason: 'Wind from behind (limited drying)' };
   } else {
-    return { score: 0.1, reason: 'Wind directly at wall (no drying effect)' };
+    return { score: 0.4, reason: 'Wind directly at wall (cooling but limited drying)' };
   }
 }
 
@@ -41,26 +45,29 @@ function calculateHumidityScore(humidity: number): { score: number; reason: stri
     return { score: 1.0, reason: 'Very low humidity (excellent friction)' };
   } else if (humidity <= 60) {
     return { score: 0.8, reason: 'Moderate humidity (good friction)' };
-  } else if (humidity <= 70) {
-    return { score: 0.5, reason: 'Elevated humidity (fair friction)' };
-  } else if (humidity <= 80) {
-    return { score: 0.2, reason: 'High humidity (poor friction)' };
+  } else if (humidity <= 75) {
+    return { score: 0.6, reason: 'Elevated humidity (fair friction)' };
+  } else if (humidity <= 85) {
+    return { score: 0.4, reason: 'High humidity (reduced friction)' };
   } else {
-    return { score: -0.2, reason: 'Very high humidity (slippery)' };
+    return { score: 0.2, reason: 'Very high humidity (slippery)' };
   }
 }
 
 function calculateTemperatureScore(temperature: number): { score: number; reason: string } {
-  if (temperature >= 8 && temperature <= 18) {
-    return { score: 1.0, reason: 'Optimal temperature range (8-18°C)' };
-  } else if (temperature >= 5 && temperature <= 22) {
-    return { score: 0.7, reason: 'Good temperature (5-22°C)' };
-  } else if (temperature >= 0 && temperature <= 25) {
-    return { score: 0.4, reason: 'Acceptable temperature' };
+  // Prioriter kalde, tørre dager – 0–10 °C er "crisp" for friksjon
+  if (temperature >= 0 && temperature <= 10) {
+    return { score: 1.0, reason: 'Cold and crisp (0–10°C)' };
+  } else if (temperature > 10 && temperature <= 18) {
+    return { score: 0.8, reason: 'Mild (10–18°C)' };
+  } else if (temperature > 18 && temperature <= 22) {
+    return { score: 0.6, reason: 'Warm but acceptable (18–22°C)' };
   } else if (temperature < 0) {
-    return { score: 0.0, reason: 'Below freezing (rock may be icy)' };
+    return { score: 0.4, reason: 'Below freezing (possible ice)' };
+  } else if (temperature > 22 && temperature <= 28) {
+    return { score: 0.4, reason: 'Warm (reduced friction)' };
   } else {
-    return { score: 0.2, reason: 'Too warm (sweaty hands)' };
+    return { score: 0.2, reason: 'Hot (sweaty, poor friction)' };
   }
 }
 
@@ -92,7 +99,8 @@ function computeFrictionWithAspect(
     reasons.push(cloudCover.reason);
   }
 
-  const baseScore = (windAspect.score * 0.3) + (humidity.score * 0.4) + (temperature.score * 0.3);
+  // Mer vekt på fuktighet, litt mindre på vind/temperatur
+  const baseScore = (windAspect.score * 0.25) + (humidity.score * 0.5) + (temperature.score * 0.25);
   const finalScore = baseScore * cloudCover.factor;
 
   let label: 'Perfect' | 'OK' | 'Poor';
@@ -129,7 +137,8 @@ function computeFrictionWithoutAspect(
     reasons.push(cloudCover.reason);
   }
 
-  const baseScore = (humidity.score * 0.55) + (temperature.score * 0.35) + (windSpeed.score * 0.1);
+  // Uten aspect: fuktighet er viktigst, deretter temperatur, så vindstyrke
+  const baseScore = (humidity.score * 0.6) + (temperature.score * 0.25) + (windSpeed.score * 0.15);
   const finalScore = baseScore * cloudCover.factor;
 
   let label: 'Perfect' | 'OK' | 'Poor';
