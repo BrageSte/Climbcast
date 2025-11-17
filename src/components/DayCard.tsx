@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Sunrise, Sunset } from 'lucide-react';
+import { Card } from './Card';
 import type { DayAggregate } from '../types';
 
 interface DayCardProps {
@@ -48,64 +48,49 @@ export function DayCard({ day, onClick }: DayCardProps) {
   };
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className="flex-shrink-0 w-32 bg-white rounded-xl shadow-md p-3 cursor-pointer hover:shadow-lg transition-shadow snap-center"
+      className="flex-shrink-0 w-36 p-4 snap-center"
     >
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="text-center">
-          <div className="text-xs font-semibold text-gray-900">{weekday}</div>
-          <div className="text-xs text-gray-600">{dayMonth}</div>
+          <div className="text-sm font-semibold text-gray-900">{weekday}</div>
+          <div className="text-xs text-gray-500 mt-0.5">{dayMonth}</div>
         </div>
 
         <div className="flex items-center justify-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${getRatingColor(day.rating)}`} />
-          <span className="text-xs font-medium text-gray-700">{day.rating}</span>
+          <div className={`w-2 h-2 rounded-full ${getRatingColor(day.rating)}`} />
+          <span className="text-xs font-semibold text-gray-700">{day.rating}</span>
         </div>
 
-        {day.bestWindow && (
-          <div className="text-center">
-            <div className="text-xs text-gray-500">Best Window</div>
-            <div className="text-xs font-semibold text-gray-900">
-              {String(day.bestWindow.startHour).padStart(2, '0')}:00 - {String(day.bestWindow.endHour).padStart(2, '0')}:00
-            </div>
-          </div>
-        )}
-
-        {(day.sunrise || day.sunset) && (
-          <div className="flex justify-around text-xs">
-            {day.sunrise && (
-              <div className="flex items-center gap-1 text-amber-600">
-                <Sunrise size={12} />
-                <span>{formatTime(day.sunrise)}</span>
-              </div>
-            )}
-            {day.sunset && (
-              <div className="flex items-center gap-1 text-orange-600">
-                <Sunset size={12} />
-                <span>{formatTime(day.sunset)}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex gap-[1px] h-3">
+        <div className="flex gap-0.5 h-2 rounded-full overflow-hidden">
           {day.heatbar.map((bar) => (
             <div
               key={bar.hour}
-              className={`flex-1 ${getHeatbarColor(bar.quality, bar.isDaylight)} rounded-[1px]`}
+              className={`flex-1 ${getHeatbarColor(bar.quality, bar.isDaylight)}`}
               title={`${bar.hour}:00 - ${bar.quality}${!bar.isDaylight ? ' (night)' : ''}`}
             />
           ))}
         </div>
 
-        <div className="text-xs text-gray-600 text-center space-y-1">
-          <div>{day.minTemp}°C - {day.maxTemp}°C</div>
+        {day.bestWindow && (
+          <div className="text-center bg-gray-50 rounded-lg py-2 px-2">
+            <div className="text-xs text-gray-500 mb-0.5">Best</div>
+            <div className="text-xs font-semibold text-gray-900">
+              {String(day.bestWindow.startHour).padStart(2, '0')}:00-{String(day.bestWindow.endHour).padStart(2, '0')}:00
+            </div>
+          </div>
+        )}
+
+        <div className="text-center">
+          <div className="text-sm font-semibold text-gray-900">
+            {day.minTemp}° / {day.maxTemp}°
+          </div>
           {day.totalPrecipitation > 0 && (
-            <div className="text-blue-600">{day.totalPrecipitation}mm rain</div>
+            <div className="text-xs text-blue-600 mt-1">{day.totalPrecipitation}mm</div>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

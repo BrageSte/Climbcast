@@ -1,5 +1,6 @@
 import { Thermometer, Droplets, Mountain } from 'lucide-react';
 import { useMemo } from 'react';
+import { Card } from './Card';
 import type { Crag, HourPoint } from '../types';
 import { computeFriction } from '../utils/frictionCalculator';
 import { FilterPanel, type FilterOptions } from './FilterPanel';
@@ -22,13 +23,13 @@ interface CragWithScore {
 function getFrictionColor(label: string): string {
   switch (label) {
     case 'Perfect':
-      return 'bg-green-100 text-green-700';
+      return 'bg-green-50 text-green-700 border border-green-200';
     case 'OK':
-      return 'bg-yellow-100 text-yellow-700';
+      return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
     case 'Poor':
-      return 'bg-red-100 text-red-700';
+      return 'bg-red-50 text-red-700 border border-red-200';
     default:
-      return 'bg-gray-100 text-gray-700';
+      return 'bg-gray-50 text-gray-700 border border-gray-200';
   }
 }
 
@@ -97,7 +98,18 @@ export function BestNowView({ crags, weatherData, onCragSelect }: BestNowViewPro
   }, [crags]);
 
   return (
-    <div className="h-screen overflow-y-auto bg-gray-50 md:pt-14 pb-20 md:pb-6">
+    <div className="h-screen overflow-y-auto bg-gray-50 pb-20">
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Best Right Now</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {filteredCrags.length === cragsWithScores.length
+              ? 'Crags with best conditions'
+              : `${filteredCrags.length} of ${cragsWithScores.length} crags`}
+          </p>
+        </div>
+      </div>
+
       <FilterPanel
         filters={filters}
         onChange={setFilters}
@@ -107,28 +119,19 @@ export function BestNowView({ crags, weatherData, onCragSelect }: BestNowViewPro
       />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Best nå</h1>
-          <p className="text-gray-600">
-            {filteredCrags.length === cragsWithScores.length
-              ? 'Klatrefelt med beste forhold akkurat nå'
-              : `${filteredCrags.length} av ${cragsWithScores.length} felt`}
-          </p>
-        </div>
-
         <div className="space-y-3">
           {filteredCrags.map(({ crag, weather, label, hasAspectData }) => (
-            <button
+            <Card
               key={crag.id}
               onClick={() => onCragSelect(crag)}
-              className="w-full bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all text-left"
+              className="p-5"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">{crag.name}</h3>
-                  <p className="text-sm text-gray-600">{crag.region}</p>
+                <div className="flex-1 min-w-0 pr-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-0.5 truncate">{crag.name}</h3>
+                  <p className="text-sm text-gray-500">{crag.region}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getFrictionColor(label)}`}>
+                <span className={`px-3 py-1.5 rounded-xl text-xs font-bold flex-shrink-0 ${getFrictionColor(label)}`}>
                   {label}
                   {!hasAspectData && (
                     <span className="ml-1 text-current opacity-70" title="Estimated score">~</span>
@@ -136,36 +139,36 @@ export function BestNowView({ crags, weatherData, onCragSelect }: BestNowViewPro
                 </span>
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-gray-700">
+              <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1.5">
                   <Thermometer size={16} className="text-orange-500" />
-                  <span>{weather.temperature}°</span>
+                  <span className="font-medium">{weather.temperature}°</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Droplets size={16} className="text-blue-500" />
-                  <span>{weather.humidity}%</span>
+                  <span className="font-medium">{weather.humidity}%</span>
                 </div>
                 {crag.rock_type && (
                   <div className="flex items-center gap-1.5">
                     <Mountain size={16} className="text-gray-500" />
-                    <span className="capitalize">{crag.rock_type}</span>
+                    <span className="capitalize font-medium">{crag.rock_type}</span>
                   </div>
                 )}
               </div>
-            </button>
+            </Card>
           ))}
         </div>
 
         {cragsWithScores.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Ingen værdata tilgjengelig for øyeblikket</p>
+          <div className="text-center py-16">
+            <p className="text-gray-500">No weather data available</p>
           </div>
         )}
 
         {cragsWithScores.length > 0 && filteredCrags.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 font-medium mb-2">Ingen felt matcher filtrene</p>
-            <p className="text-gray-500 text-sm">Prøv å justere filtrene for å se flere felt</p>
+          <div className="text-center py-16">
+            <p className="text-gray-700 font-semibold mb-1">No crags match filters</p>
+            <p className="text-gray-500 text-sm">Try adjusting your filters</p>
           </div>
         )}
       </div>
