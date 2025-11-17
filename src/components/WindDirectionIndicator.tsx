@@ -106,7 +106,7 @@ export function WindDirectionIndicator({ windDirection, wallAspect, windSpeed }:
               stroke="#1e293b"
               strokeWidth="5"
               strokeLinecap="round"
-              transform={`rotate(${wallAspect} 50 50)`}
+              transform={`rotate(${wallAspect + 90} 50 50)`}
             />
 
             <line
