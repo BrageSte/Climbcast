@@ -138,6 +138,8 @@ function AppContent() {
               crag={selectedCrag}
               currentWeather={currentWeather}
               weatherHistory={weatherData?.hours ?? []}
+              allWeatherHours={weatherData?.hours ?? []}
+              sunriseSunsetData={weatherData?.sunriseSunset}
               onClose={() => setSelectedCrag(null)}
               onExpand={() => setShowForecast(true)}
             />
