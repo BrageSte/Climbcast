@@ -326,12 +326,12 @@ WHERE name ILIKE '%kolsås%' OR name ILIKE '%damtjern%';
 
 ## Technical Notes
 
-### Why Perpendicular Calculation?
+### Why Use Bearing Direction Directly?
 
-The bearing along the wall base (A→B) is parallel to the ground. Climbers climb on the face perpendicular to this. The algorithm:
+The bearing along the wall base (A→B) represents the direction the wall runs/faces. This is the wall aspect. The algorithm:
 - Computes bearing along wall: 90° (due East)
-- Perpendiculars: 0° (North) and 180° (South)
-- Selects the perpendicular pointing toward climbing area
+- This IS the wall aspect: The wall runs East
+- No perpendicular calculation needed
 
 ### Circular Averaging for Angles
 

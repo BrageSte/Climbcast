@@ -128,7 +128,7 @@ function calculateAspectFromGeometry(
     return null;
   }
 
-  const segments: Array<{ bearing: number; length: number; perpendicular: number }> = [];
+  const segments: Array<{ bearing: number; length: number }> = [];
 
   for (let i = 0; i < geometry.length - 1; i++) {
     const point1 = geometry[i];
@@ -138,26 +138,9 @@ function calculateAspectFromGeometry(
     const distance = calculateDistance(point1, point2);
 
     if (distance > 1) {
-      const perpendicular1 = normalizeAngle(bearing + 90);
-      const perpendicular2 = normalizeAngle(bearing - 90);
-
-      const dist1 = calculateDistance(centerPoint, point1);
-      const dist2 = calculateDistance(centerPoint, point2);
-
-      const toCenter1 = calculateBearing(point1, centerPoint);
-      const toCenter2 = calculateBearing(point2, centerPoint);
-
-      const angleDiff1 = Math.abs(normalizeAngle(perpendicular1 - toCenter1));
-      const angleDiff2 = Math.abs(normalizeAngle(perpendicular2 - toCenter2));
-      const minAngleDiff1 = Math.min(angleDiff1, 360 - angleDiff1);
-      const minAngleDiff2 = Math.min(angleDiff2, 360 - angleDiff2);
-
-      const perpendicularAspect = minAngleDiff1 < minAngleDiff2 ? perpendicular1 : perpendicular2;
-
       segments.push({
         bearing,
-        length: distance,
-        perpendicular: perpendicularAspect
+        length: distance
       });
     }
   }
@@ -173,7 +156,7 @@ function calculateAspectFromGeometry(
 
   for (const segment of segments) {
     const weight = segment.length / totalLength;
-    const radians = toRadians(segment.perpendicular);
+    const radians = toRadians(segment.bearing);
     sumX += Math.cos(radians) * weight;
     sumY += Math.sin(radians) * weight;
   }
@@ -184,7 +167,7 @@ function calculateAspectFromGeometry(
   const aspectDir = degreesToDirection(aspectDeg);
 
   const variance = segments.reduce((sum, seg) => {
-    const diff = Math.abs(normalizeAngle(seg.perpendicular - averageBearing));
+    const diff = Math.abs(normalizeAngle(seg.bearing - averageBearing));
     const minDiff = Math.min(diff, 360 - diff);
     return sum + minDiff;
   }, 0) / segments.length;
