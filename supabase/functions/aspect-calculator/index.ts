@@ -260,11 +260,12 @@ function calculateAspectFromElevationGrid(
   }
 
   let aspectRad = Math.atan2(dz_dy, -dz_dx);
-  let aspectDeg = (90 - toDegrees(aspectRad)) % 360;
-  if (aspectDeg < 0) {
-    aspectDeg += 360;
+  let slopeDirection = (90 - toDegrees(aspectRad)) % 360;
+  if (slopeDirection < 0) {
+    slopeDirection += 360;
   }
 
+  const aspectDeg = (slopeDirection + 90) % 360;
   const aspectDir = degreesToDirection(aspectDeg);
   const gradient = Math.sqrt(dz_dx * dz_dx + dz_dy * dz_dy);
   const confidence = Math.min(1, gradient * 2);
