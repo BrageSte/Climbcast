@@ -66,7 +66,7 @@ export function calculateAspectFromGeometry(
     return null;
   }
 
-  const segments: Array<{ bearing: number; length: number }> = [];
+  const segments: Array<{ bearing: number; length: number; faceAspect: number }> = [];
 
   for (let i = 0; i < geometry.length - 1; i++) {
     const point1 = geometry[i];
@@ -76,9 +76,27 @@ export function calculateAspectFromGeometry(
     const distance = calculateDistance(point1, point2);
 
     if (distance > 1) {
+      const perpRight = normalizeAngle(bearing + 90);
+      const perpLeft = normalizeAngle(bearing - 90);
+
+      const midpoint = {
+        lat: (point1.lat + point2.lat) / 2,
+        lon: (point1.lon + point2.lon) / 2
+      };
+
+      const bearingToCenter = calculateBearing(midpoint, centerPoint);
+
+      const diffRight = Math.abs(normalizeAngle(perpRight - bearingToCenter));
+      const diffLeft = Math.abs(normalizeAngle(perpLeft - bearingToCenter));
+      const minDiffRight = Math.min(diffRight, 360 - diffRight);
+      const minDiffLeft = Math.min(diffLeft, 360 - diffLeft);
+
+      const faceAspect = minDiffRight < minDiffLeft ? perpRight : perpLeft;
+
       segments.push({
         bearing,
-        length: distance
+        length: distance,
+        faceAspect
       });
     }
   }
@@ -94,18 +112,18 @@ export function calculateAspectFromGeometry(
 
   for (const segment of segments) {
     const weight = segment.length / totalLength;
-    const radians = toRadians(segment.bearing);
+    const radians = toRadians(segment.faceAspect);
     sumX += Math.cos(radians) * weight;
     sumY += Math.sin(radians) * weight;
   }
 
-  const averageBearing = normalizeAngle(toDegrees(Math.atan2(sumY, sumX)));
+  const averageFaceAspect = normalizeAngle(toDegrees(Math.atan2(sumY, sumX)));
 
-  const aspectDeg = Math.round(averageBearing);
+  const aspectDeg = Math.round(averageFaceAspect);
   const aspectDir = degreesToDirection(aspectDeg);
 
   const variance = segments.reduce((sum, seg) => {
-    const diff = Math.abs(normalizeAngle(seg.bearing - averageBearing));
+    const diff = Math.abs(normalizeAngle(seg.faceAspect - averageFaceAspect));
     const minDiff = Math.min(diff, 360 - diff);
     return sum + minDiff;
   }, 0) / segments.length;
