@@ -175,7 +175,8 @@ export function calculateAspectFromElevationGrid(
       const cliffDirection = elevationDiffs.find(d => d.drop === maxDrop);
 
       if (cliffDirection) {
-        const aspectDeg = Math.round(cliffDirection.direction);
+        const wallFaceDirection = normalizeAngle(cliffDirection.direction + 180);
+        const aspectDeg = Math.round(wallFaceDirection);
         const aspectDir = degreesToDirection(aspectDeg);
 
         const confidence = Math.min(1, maxDrop / 50);

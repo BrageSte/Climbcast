@@ -16,7 +16,7 @@ interface DEMProvider {
 }
 
 class OpenTopoDataProvider implements DEMProvider {
-  private baseUrl = 'https://api.opentopodata.org/v1/eudem';
+  private baseUrl = 'https://api.opentopodata.org/v1/aster30m';
 
   async fetchElevationGrid(lat: number, lon: number, gridSize: number): Promise<number[][]> {
     const spacing = 0.00027;
@@ -232,7 +232,8 @@ function calculateAspectFromElevationGrid(
       const cliffDirection = elevationDiffs.find(d => d.drop === maxDrop);
 
       if (cliffDirection) {
-        const aspectDeg = Math.round(cliffDirection.direction);
+        const wallFaceDirection = normalizeAngle(cliffDirection.direction + 180);
+        const aspectDeg = Math.round(wallFaceDirection);
         const aspectDir = degreesToDirection(aspectDeg);
         const confidence = Math.min(1, maxDrop / 50);
 
