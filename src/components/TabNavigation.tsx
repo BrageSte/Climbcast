@@ -8,7 +8,7 @@ interface TabNavigationProps {
 export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   const tabs: { id: CragTabType; label: string }[] = [
     { id: 'live', label: 'Live' },
-    { id: 'forecast', label: '7 Days' },
+    { id: 'forecast', label: 'Forecast' },
     { id: 'analysis', label: 'Analysis' },
   ];
 
