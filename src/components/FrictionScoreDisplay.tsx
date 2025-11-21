@@ -2,8 +2,9 @@ import { Card } from './Card';
 
 interface FrictionScoreDisplayProps {
   score: number;
-  label: string;
-  hasAspectData: boolean;
+  label?: string;
+  hasAspectData?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 function getScoreColor(score: number): string {
@@ -18,10 +19,47 @@ function getBarColor(score: number): string {
   return 'bg-red-500';
 }
 
-export function FrictionScoreDisplay({ score, label, hasAspectData }: FrictionScoreDisplayProps) {
-  const percentage = Math.round(score * 100);
+export function FrictionScoreDisplay({
+  score,
+  label,
+  hasAspectData = true,
+  size = 'lg'
+}: FrictionScoreDisplayProps) {
+  const percentage = typeof score === 'number' ? Math.round(score) : 0;
   const textColor = getScoreColor(percentage);
   const barColor = getBarColor(percentage);
+
+  if (size === 'sm') {
+    return (
+      <div className="flex items-center gap-2">
+        <div className={`text-lg font-bold ${textColor}`}>
+          {percentage}
+        </div>
+        <div className="w-12 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${barColor}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (size === 'md') {
+    return (
+      <div className="flex flex-col gap-1">
+        <div className={`text-2xl font-bold ${textColor}`}>
+          {percentage}
+        </div>
+        <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${barColor}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card className="p-5">
@@ -38,9 +76,11 @@ export function FrictionScoreDisplay({ score, label, hasAspectData }: FrictionSc
           <div className={`text-5xl font-bold ${textColor} tracking-tight mb-2`}>
             {percentage}
           </div>
-          <div className="text-sm text-gray-600 mb-4">
-            {label} conditions for climbing
-          </div>
+          {label && (
+            <div className="text-sm text-gray-600 mb-4">
+              {label} conditions for climbing
+            </div>
+          )}
         </div>
       </div>
 
