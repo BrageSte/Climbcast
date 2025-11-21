@@ -1,18 +1,21 @@
-import { Edit3, Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { Edit3 } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import type { Crag, HourPoint } from '../types';
 import { computeFriction } from '../utils/frictionCalculator';
 import { calculateWetnessScore } from '../utils/wetnessCalculator';
+import { groupHoursByDay, aggregateDay } from '../utils/dayAggregator';
 import { RockTypeInfo } from './RockTypeInfo';
 import { WindDirectionIndicator } from './WindDirectionIndicator';
 import { FrictionScoreDisplay } from './FrictionScoreDisplay';
 import { WetnessIndicator } from './WetnessIndicator';
 import { MetricCardsGrid } from './MetricCards';
+import { VerticalDayForecast } from './VerticalDayForecast';
 import { EditCragModal } from './EditCragModal';
 import { CragHeader } from './CragHeader';
 import { TabNavigation, type CragTabType } from './TabNavigation';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSubmitChangeRequest } from '../hooks/useChangeRequests';
+import { format } from 'date-fns';
 
 interface CragDetailSheetProps {
   crag: Crag;
@@ -20,10 +23,12 @@ interface CragDetailSheetProps {
   weatherHistory: HourPoint[];
   onClose: () => void;
   onExpand: () => void;
+  allWeatherHours?: HourPoint[];
+  sunriseSunsetData?: Map<string, { sunrise: string | null; sunset: string | null }>;
 }
 
 
-export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose, onExpand }: CragDetailSheetProps) {
+export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose, onExpand, allWeatherHours = [], sunriseSunsetData }: CragDetailSheetProps) {
   const friction = currentWeather ? computeFriction(currentWeather, crag.aspect) : null;
   const wetness = currentWeather && weatherHistory.length > 0
     ? calculateWetnessScore(currentWeather, weatherHistory)
@@ -34,6 +39,36 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
   const submitChangeRequest = useSubmitChangeRequest();
 
   const isFav = isFavorite(crag.id);
+
+  const dayAggregates = useMemo(() => {
+    if (!allWeatherHours || allWeatherHours.length === 0) return [];
+
+    const dayGroups = groupHoursByDay(allWeatherHours);
+    return dayGroups.map(hours => {
+      const date = format(new Date(hours[0].time), 'yyyy-MM-dd');
+      const sunData = sunriseSunsetData?.get(date);
+      return aggregateDay(
+        hours,
+        crag.aspect,
+        sunData?.sunrise ?? null,
+        sunData?.sunset ?? null
+      );
+    });
+  }, [allWeatherHours, crag.aspect, sunriseSunsetData]);
+
+  const hoursByDay = useMemo(() => {
+    if (!allWeatherHours || allWeatherHours.length === 0) return new Map();
+
+    const dayGroups = groupHoursByDay(allWeatherHours);
+    const map = new Map<string, HourPoint[]>();
+
+    dayGroups.forEach(hours => {
+      const date = format(new Date(hours[0].time), 'yyyy-MM-dd');
+      map.set(date, hours);
+    });
+
+    return map;
+  }, [allWeatherHours]);
 
   const handleSubmitEdit = async (changes: Record<string, unknown>, comment: string, latitude?: number, longitude?: number) => {
     await submitChangeRequest.mutateAsync({
@@ -95,22 +130,13 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
                     rockConfidence={crag.rock_confidence}
                   />
 
-                  <div className="flex gap-3 mt-6">
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-gray-200"
-                    >
-                      <Edit3 size={18} />
-                      <span>Suggest Edit</span>
-                    </button>
-                    <button
-                      onClick={onExpand}
-                      className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-2xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-                    >
-                      <Calendar size={18} />
-                      <span>7-Day Forecast</span>
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border border-gray-200 mt-6"
+                  >
+                    <Edit3 size={18} />
+                    <span>Suggest Edit</span>
+                  </button>
                 </div>
               )}
 
@@ -123,9 +149,15 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
           )}
 
           {activeTab === 'forecast' && (
-            <div className="text-center text-gray-500 py-12">
-              Forecast view - Click 7-Day Forecast button for detailed forecast
-            </div>
+            <>
+              {dayAggregates.length > 0 ? (
+                <VerticalDayForecast days={dayAggregates} hoursByDay={hoursByDay} />
+              ) : (
+                <div className="text-center text-gray-500 py-12">
+                  Loading forecast data...
+                </div>
+              )}
+            </>
           )}
 
           {activeTab === 'analysis' && (

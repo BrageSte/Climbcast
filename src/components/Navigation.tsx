@@ -1,18 +1,18 @@
-import { Map as MapIcon, Star, TrendingUp, Plus } from 'lucide-react';
+import { Home, Map as MapIcon, BarChart3, User } from 'lucide-react';
 
-export type TabType = 'map' | 'favorites' | 'best-now';
+export type TabType = 'home' | 'explore' | 'analyze' | 'profile';
 
 interface NavigationProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
-  onAddCrag: () => void;
 }
 
-export function Navigation({ activeTab, onTabChange, onAddCrag }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange }: NavigationProps) {
   const tabs = [
-    { id: 'map' as TabType, label: 'Map', icon: MapIcon },
-    { id: 'favorites' as TabType, label: 'Favorites', icon: Star },
-    { id: 'best-now' as TabType, label: 'Best Now', icon: TrendingUp },
+    { id: 'home' as TabType, label: 'Home', icon: Home },
+    { id: 'explore' as TabType, label: 'Explore', icon: MapIcon },
+    { id: 'analyze' as TabType, label: 'Analyze', icon: BarChart3 },
+    { id: 'profile' as TabType, label: 'Profile', icon: User },
   ];
 
   return (
@@ -43,15 +43,6 @@ export function Navigation({ activeTab, onTabChange, onAddCrag }: NavigationProp
           );
         })}
         </div>
-        <button
-          onClick={onAddCrag}
-          className="flex items-center justify-center px-3 py-2 transition-colors"
-          aria-label="Add crag"
-        >
-          <div className="w-10 h-10 bg-gray-900 hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors">
-            <Plus size={20} className="text-white" strokeWidth={2.5} />
-          </div>
-        </button>
       </div>
     </nav>
   );

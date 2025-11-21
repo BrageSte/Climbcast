@@ -88,3 +88,19 @@ export interface METResponse {
     timeseries: METTimeseries[];
   };
 }
+
+export type WallType = 'slab' | 'vertical' | 'overhang';
+
+export type RockType = 'granite' | 'gneiss' | 'limestone' | 'sandstone' | 'other';
+
+export interface DerivedMetrics {
+  wetnessScore: number;
+  frictionScore: number;
+  sunExposure: boolean;
+  goodnessIndex?: number;
+}
+
+export interface CragWithMetrics extends Crag {
+  currentMetrics?: DerivedMetrics;
+  distanceFromUser?: number;
+}
