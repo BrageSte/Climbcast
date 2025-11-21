@@ -1,15 +1,17 @@
 import { useState, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navigation, type TabType } from './components/Navigation';
-import { HomeView } from './components/HomeView';
-import { ExploreView } from './components/ExploreView';
-import { AnalyzeView } from './components/AnalyzeView';
-import { ProfileView } from './components/ProfileView';
+import { Map as MapComponent } from './components/Map';
+import { SearchBar } from './components/SearchBar';
+import { FavoritesView } from './components/FavoritesView';
+import { BestNowView } from './components/BestNowView';
 import { CragDetailSheet } from './components/CragDetailSheet';
 import { SevenDayForecast } from './components/SevenDayForecast';
+import { AddCragForm } from './components/AddCragForm';
 import { useCrags } from './hooks/useCrags';
 import { useWeather } from './hooks/useWeather';
 import { useAllCragsWeather } from './hooks/useAllCragsWeather';
+import { useAddCrag } from './hooks/useAddCrag';
 import { groupHoursByDay, aggregateDay } from './utils/dayAggregator';
 import type { Crag, DayAggregate } from './types';
 import { format } from 'date-fns';
@@ -17,13 +19,15 @@ import { format } from 'date-fns';
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [activeTab, setActiveTab] = useState<TabType>('map');
   const [selectedCrag, setSelectedCrag] = useState<Crag | null>(null);
   const [showForecast, setShowForecast] = useState(false);
   const [selectedForecastDay, setSelectedForecastDay] = useState<DayAggregate | null>(null);
+  const [showAddCragForm, setShowAddCragForm] = useState(false);
 
   const { data: crags, isLoading: cragsLoading, error: cragsError } = useCrags();
   const { data: allCragsWeatherData } = useAllCragsWeather(crags);
+  const addCragMutation = useAddCrag();
 
   const { data: weatherData } = useWeather(
     selectedCrag?.latitude ?? 60.035226,
@@ -99,34 +103,33 @@ function AppContent() {
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
-    if (tab !== 'explore') {
+    if (tab !== 'map') {
       setSelectedCrag(null);
       setShowForecast(false);
       setSelectedForecastDay(null);
     }
   };
 
+  const handleAddCrag = async (cragData: Parameters<typeof addCragMutation.mutateAsync>[0]) => {
+    await addCragMutation.mutateAsync(cragData);
+  };
 
   return (
     <div className="h-screen relative overflow-hidden">
-      <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+      <Navigation activeTab={activeTab} onTabChange={handleTabChange} onAddCrag={() => setShowAddCragForm(true)} />
 
-      {activeTab === 'home' && (
-        <HomeView
-          crags={crags ?? []}
-          weatherData={weatherMap}
-          onCragSelect={(crag) => {
-            handleCragSelect(crag);
-            setActiveTab('explore');
-          }}
-        />
-      )}
-
-      {activeTab === 'explore' && (
+      {activeTab === 'map' && (
         <>
-          <ExploreView
+          <div className="h-full w-full">
+            <MapComponent
+              crags={crags ?? []}
+              onCragSelect={handleCragSelect}
+              selectedCrag={selectedCrag}
+            />
+          </div>
+
+          <SearchBar
             crags={crags ?? []}
-            selectedCrag={selectedCrag}
             onCragSelect={handleCragSelect}
           />
 
@@ -159,18 +162,28 @@ function AppContent() {
         </>
       )}
 
-      {activeTab === 'analyze' && (
-        <AnalyzeView
+      {activeTab === 'favorites' && (
+        <FavoritesView
           crags={crags ?? []}
           weatherData={weatherMap}
-          onCragSelect={(crag) => {
-            handleCragSelect(crag);
-            setActiveTab('explore');
-          }}
+          onCragSelect={handleCragSelect}
         />
       )}
 
-      {activeTab === 'profile' && <ProfileView />}
+      {activeTab === 'best-now' && (
+        <BestNowView
+          crags={crags ?? []}
+          weatherData={weatherMap}
+          onCragSelect={handleCragSelect}
+        />
+      )}
+
+      {showAddCragForm && (
+        <AddCragForm
+          onClose={() => setShowAddCragForm(false)}
+          onSubmit={handleAddCrag}
+        />
+      )}
     </div>
   );
 }
