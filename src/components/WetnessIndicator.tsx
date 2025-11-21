@@ -1,75 +1,79 @@
-import { Droplet, Clock } from 'lucide-react';
-import { Card } from './Card';
+import { Sun, Clock } from 'lucide-react';
 import type { WetnessScore } from '../utils/wetnessCalculator';
 
 interface WetnessIndicatorProps {
   wetness: WetnessScore;
 }
 
-function getWetnessColor(level: string): string {
-  switch (level) {
-    case 'Super Dry':
-      return 'text-orange-600';
-    case 'Dry':
-      return 'text-yellow-600';
-    case 'Moist':
-      return 'text-blue-400';
-    case 'Wet':
-      return 'text-blue-600';
-    case 'Very Wet':
-      return 'text-blue-800';
-    default:
-      return 'text-gray-600';
-  }
-}
-
 export function WetnessIndicator({ wetness }: WetnessIndicatorProps) {
-  const colorClass = getWetnessColor(wetness.level);
+  const levels = [
+    { name: 'Very Wet', color: '#1e40af', min: 70 },
+    { name: 'Wet', color: '#3b82f6', min: 45 },
+    { name: 'Moist', color: '#60a5fa', min: 25 },
+    { name: 'Dry', color: '#fbbf24', min: 10 },
+    { name: 'Super Dry', color: '#f59e0b', min: 0 },
+  ];
+
+  const getPositionPercent = (dryness: number) => {
+    return dryness;
+  };
 
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <Droplet size={18} className="text-blue-500" />
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Rock Wetness
-        </span>
+    <div className="bg-gradient-to-br from-amber-50 to-gray-50 rounded-xl p-3 border border-amber-100">
+      <div className="flex items-center gap-2 mb-2">
+        <Sun size={16} className="text-amber-600" />
+        <h3 className="font-semibold text-gray-900">Rock Dryness</h3>
       </div>
 
       <div className="mb-4">
-        <div className={`text-4xl font-bold ${colorClass} tracking-tight mb-2`}>
-          {wetness.level}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xl font-bold" style={{ color: wetness.color }}>
+            {wetness.level}
+          </span>
+          <span className="text-sm text-gray-600">
+            Score: {wetness.dryness.toFixed(0)}
+          </span>
         </div>
-        <p className="text-sm text-gray-600 leading-relaxed">
-          {wetness.description}
-        </p>
+
+        <div className="relative h-6 bg-gradient-to-r from-blue-800 via-blue-300 to-amber-400 rounded-lg overflow-hidden mb-2">
+          <div
+            className="absolute top-0 bottom-0 w-1 bg-white shadow-lg transition-all duration-300"
+            style={{ left: `${getPositionPercent(wetness.dryness)}%` }}
+          >
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+              Current
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between text-xs text-gray-600 mb-2">
+          <span>Very Wet</span>
+          <span>Wet</span>
+          <span>Moist</span>
+          <span>Dry</span>
+          <span>Super Dry</span>
+        </div>
       </div>
 
-      <div className="relative h-2 bg-gradient-to-r from-blue-600 via-blue-300 to-orange-400 rounded-full overflow-hidden mb-1">
-        <div
-          className="absolute top-0 bottom-0 w-1 bg-gray-900 shadow-md transition-all duration-300"
-          style={{ left: `${wetness.dryness}%` }}
-        />
-      </div>
-
-      <div className="flex justify-between text-xs text-gray-500 mb-4">
-        <span>Very Wet</span>
-        <span>Super Dry</span>
-      </div>
+      <p className="text-sm text-gray-700 mb-2">
+        {wetness.description}
+      </p>
 
       {wetness.estimatedDryingHours !== null && (
-        <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-3">
-          <Clock size={16} className="text-gray-600 flex-shrink-0" />
+        <div className="flex items-center gap-2 bg-white rounded-lg p-2 border border-gray-200">
+          <Clock size={14} className="text-blue-600 flex-shrink-0" />
           <div className="text-sm">
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900">Estimated drying time: </span>
+            <span className="text-gray-700">
               {wetness.estimatedDryingHours < 1
-                ? 'Dry in less than 1 hour'
+                ? 'Less than 1 hour'
                 : wetness.estimatedDryingHours >= 48
-                ? 'Will take 48+ hours to dry'
-                : `Dry in ~${Math.round(wetness.estimatedDryingHours)} hours`}
+                ? '48+ hours'
+                : `~${Math.round(wetness.estimatedDryingHours)} hours`}
             </span>
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }
