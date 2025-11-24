@@ -114,11 +114,21 @@ export interface HeroCard {
   cragId?: string;
   timeWindow?: string;
   icon?: string;
+  location?: string;
+  region?: string;
+  score?: number;
+  temperature?: number;
+  wind?: string;
+  humidity?: number;
+  statusLabel?: string;
+  reliability?: 'high' | 'medium' | 'low';
+  timeframeLabel?: string;
 }
 
 export interface FavoriteCragCard {
   id: string;
   name: string;
+  region: string;
   frictionScore: number;
   trend: 'up' | 'same' | 'down';
   isWet: boolean;
@@ -126,6 +136,22 @@ export interface FavoriteCragCard {
   windDirection: number;
   wallAspect: number | null;
   windSpeed: number;
+  temperature?: number;
+  humidity?: number;
+  conditionLabel?: string;
+  nextWindow?: string;
+  statusNote?: string;
+}
+
+export interface WatchlistCragCard {
+  id: string;
+  name: string;
+  region: string;
+  statusNote: string;
+  frictionScore: number;
+  temperature: number;
+  wind: string;
+  nextWindow: string;
 }
 
 export interface ProjectCard {
