@@ -18,12 +18,6 @@ export function FavoritesSection({ favorites, onCragClick }: FavoritesSectionPro
     }
   };
 
-  const getFrictionColor = (score: number) => {
-    if (score >= 75) return 'text-emerald-600';
-    if (score >= 50) return 'text-amber-600';
-    return 'text-rose-600';
-  };
-
   const getWetnessColor = (score: number) => {
     if (score <= 30) return 'text-emerald-600';
     if (score <= 60) return 'text-amber-600';
