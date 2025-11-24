@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, ChevronRight, Droplet } from 'lucide-react';
+import { Clock, TrendingUp, TrendingDown, Minus, ChevronRight, Droplet, Wind, Thermometer } from 'lucide-react';
 import type { FavoriteCragCard } from '../types';
 
 interface FavoritesSectionProps {
@@ -10,24 +10,24 @@ export function FavoritesSection({ favorites, onCragClick }: FavoritesSectionPro
   const getTrendIcon = (trend: 'up' | 'same' | 'down') => {
     switch (trend) {
       case 'up':
-        return <TrendingUp size={16} className="text-green-600" />;
+        return <TrendingUp size={16} className="text-emerald-600" />;
       case 'down':
-        return <TrendingDown size={16} className="text-red-600" />;
+        return <TrendingDown size={16} className="text-rose-500" />;
       default:
-        return <Minus size={16} className="text-gray-400" />;
+        return <Minus size={16} className="text-slate-400" />;
     }
   };
 
   const getFrictionColor = (score: number) => {
-    if (score >= 75) return 'text-green-600';
+    if (score >= 75) return 'text-emerald-600';
     if (score >= 50) return 'text-amber-600';
-    return 'text-red-600';
+    return 'text-rose-600';
   };
 
   const getWetnessColor = (score: number) => {
-    if (score <= 30) return 'text-green-600';
+    if (score <= 30) return 'text-emerald-600';
     if (score <= 60) return 'text-amber-600';
-    return 'text-red-600';
+    return 'text-rose-600';
   };
 
   const calculateWindImpact = (windDir: number, wallAspect: number | null) => {
@@ -43,7 +43,13 @@ export function FavoritesSection({ favorites, onCragClick }: FavoritesSectionPro
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Favorites</h2>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Favoritter</h2>
+          <p className="text-sm text-slate-500">Oversikt for neste døgn</p>
+        </div>
+        <button className="text-blue-700 text-sm font-semibold hover:underline">Se alle</button>
+      </div>
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
         {favorites.map((crag) => {
           const windImpact = calculateWindImpact(crag.windDirection, crag.wallAspect);
@@ -53,67 +59,57 @@ export function FavoritesSection({ favorites, onCragClick }: FavoritesSectionPro
             <button
               key={crag.id}
               onClick={() => onCragClick(crag.id)}
-              className="flex-shrink-0 w-64 bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all snap-start"
+              className="flex-shrink-0 w-72 bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all snap-start"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-gray-900 truncate">
-                    {crag.name}
-                  </h3>
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-blue-700">{crag.region}</p>
+                  <h3 className="text-lg font-semibold text-slate-900 truncate">{crag.name}</h3>
+                  <p className="text-sm text-slate-600">{crag.statusNote ?? 'Stabile forhold'}</p>
+                  <div className="inline-flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                    <Clock size={14} />
+                    <span>{crag.nextWindow ?? 'Nå'}</span>
+                  </div>
                 </div>
-                <ChevronRight className="text-gray-400 flex-shrink-0 ml-2" size={20} />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-inner">
+                      <span className="text-2xl font-bold">{crag.frictionScore}</span>
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
+                      {getTrendIcon(crag.trend)}
+                    </div>
+                  </div>
+                  <span className={`text-xs font-semibold ${getWetnessColor(crag.wetnessScore)}`}>
+                    {crag.conditionLabel ?? (crag.wetnessScore <= 30 ? 'Tørr' : crag.wetnessScore <= 60 ? 'Fuktig' : 'Våt')}
+                  </span>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Friction</div>
-                    <div className={`text-2xl font-bold ${getFrictionColor(crag.frictionScore)}`}>
-                      {crag.frictionScore}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {getTrendIcon(crag.trend)}
-                  </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-600">
+                <div className="flex items-center gap-1">
+                  <Thermometer size={14} className="text-rose-500" />
+                  <span>{crag.temperature ? `${crag.temperature}°C` : '—'}</span>
                 </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-1">
+                  <Droplet size={14} className={getWetnessColor(crag.wetnessScore)} fill={crag.isWet ? 'currentColor' : 'none'} />
+                  <span className={getWetnessColor(crag.wetnessScore)}>
+                    {crag.wetnessScore <= 30 ? 'Tørr' : crag.wetnessScore <= 60 ? 'Fuktig' : 'Våt'}
+                  </span>
+                </div>
+                {crag.wallAspect !== null ? (
                   <div className="flex items-center gap-1.5">
-                    <Droplet
-                      size={16}
-                      className={getWetnessColor(crag.wetnessScore)}
-                      fill={crag.isWet ? 'currentColor' : 'none'}
-                    />
-                    <span className={`text-xs font-medium ${getWetnessColor(crag.wetnessScore)}`}>
-                      {crag.wetnessScore <= 30 ? 'Dry' : crag.wetnessScore <= 60 ? 'Damp' : 'Wet'}
+                    <Wind size={14} className={isWindOnWall ? 'text-blue-600' : 'text-slate-400'} />
+                    <span className={`text-xs font-medium ${isWindOnWall ? 'text-blue-600' : 'text-slate-500'}`}>
+                      {crag.windSpeed.toFixed(1)} m/s
                     </span>
                   </div>
-
-                  {crag.wallAspect !== null && (
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className={`${isWindOnWall ? 'text-blue-600' : 'text-gray-400'}`}
-                        style={{ transform: `rotate(${crag.windDirection}deg)` }}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M12 19V5M5 12l7-7 7 7" />
-                        </svg>
-                      </div>
-                      <span className={`text-xs font-medium ${isWindOnWall ? 'text-blue-600' : 'text-gray-400'}`}>
-                        {crag.windSpeed.toFixed(1)} m/s
-                      </span>
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-slate-500">
+                    <ChevronRight size={14} />
+                    <span>Se mer</span>
+                  </div>
+                )}
               </div>
             </button>
           );
