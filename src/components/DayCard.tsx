@@ -5,6 +5,7 @@ import type { DayAggregate } from '../types';
 interface DayCardProps {
   day: DayAggregate;
   onClick: () => void;
+  isActive?: boolean;
 }
 
 function getRatingColor(rating: string): string {
@@ -36,7 +37,7 @@ function getHeatbarColor(quality: string, isDaylight: boolean): string {
   }
 }
 
-export function DayCard({ day, onClick }: DayCardProps) {
+export function DayCard({ day, onClick, isActive = false }: DayCardProps) {
   const date = new Date(day.date);
   const weekday = format(date, 'EEE');
   const dayMonth = format(date, 'MMM d');
@@ -56,7 +57,11 @@ export function DayCard({ day, onClick }: DayCardProps) {
   return (
     <div
       onClick={onClick}
-      className="min-w-[260px] bg-white border border-slate-100 rounded-2xl shadow-sm p-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg transition-all snap-start"
+      className={`min-w-[260px] bg-white border rounded-2xl p-3 cursor-pointer transition-all snap-start ${
+        isActive
+          ? 'border-indigo-200 shadow-lg ring-2 ring-indigo-200'
+          : 'border-slate-100 shadow-sm hover:-translate-y-0.5 hover:shadow-lg'
+      }`}
     >
       <div className="flex items-start gap-3">
         <div
