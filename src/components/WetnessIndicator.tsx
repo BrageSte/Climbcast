@@ -6,14 +6,6 @@ interface WetnessIndicatorProps {
 }
 
 export function WetnessIndicator({ wetness }: WetnessIndicatorProps) {
-  const levels = [
-    { name: 'Very Wet', color: '#1e40af', min: 70 },
-    { name: 'Wet', color: '#3b82f6', min: 45 },
-    { name: 'Moist', color: '#60a5fa', min: 25 },
-    { name: 'Dry', color: '#fbbf24', min: 10 },
-    { name: 'Super Dry', color: '#f59e0b', min: 0 },
-  ];
-
   const getPositionPercent = (dryness: number) => {
     return dryness;
   };

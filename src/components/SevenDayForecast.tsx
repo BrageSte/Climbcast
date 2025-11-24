@@ -7,7 +7,7 @@ interface SevenDayForecastProps {
   days: DayAggregate[];
   cragName: string;
   onClose: () => void;
-  onDaySelect: (day: DayAggregate) => void;
+  onDaySelect: (day: DayAggregate | null) => void;
   selectedDay: DayAggregate | null;
   selectedDayHours: HourPoint[];
   wallAspect: number | null;
@@ -45,7 +45,7 @@ export function SevenDayForecast({ days, cragName, onClose, onDaySelect, selecte
             day={selectedDay}
             hours={selectedDayHours}
             wallAspect={wallAspect}
-            onCollapse={() => onDaySelect(null as any)}
+            onCollapse={() => onDaySelect(null)}
           />
         )}
 

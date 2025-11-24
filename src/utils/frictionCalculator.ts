@@ -104,9 +104,9 @@ function computeFrictionWithAspect(
   const finalScore = baseScore * cloudCover.factor;
 
   let label: 'Perfect' | 'OK' | 'Poor';
-  if (finalScore >= 0.7) {
+  if (finalScore >= 0.85) {
     label = 'Perfect';
-  } else if (finalScore >= 0.4) {
+  } else if (finalScore >= 0.6) {
     label = 'OK';
   } else {
     label = 'Poor';
@@ -142,9 +142,9 @@ function computeFrictionWithoutAspect(
   const finalScore = baseScore * cloudCover.factor;
 
   let label: 'Perfect' | 'OK' | 'Poor';
-  if (finalScore >= 0.7) {
+  if (finalScore >= 0.85) {
     label = 'Perfect';
-  } else if (finalScore >= 0.4) {
+  } else if (finalScore >= 0.6) {
     label = 'OK';
   } else {
     label = 'Poor';

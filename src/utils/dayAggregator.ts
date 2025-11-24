@@ -70,8 +70,8 @@ export function aggregateDay(
   const sunriseHour = sunrise ? getHourFromTime(sunrise) : 0;
   const sunsetHour = sunset ? getHourFromTime(sunset) : 23;
 
-  const hourlyScores = hours.map((hour, index) => ({
-    hour: index,
+  const hourlyScores = hours.map(hour => ({
+    hour: getHourFromTime(hour.time),
     score: computeFriction(hour, wallAspect),
   }));
 

@@ -1,5 +1,5 @@
 import { X, Check, MapPin } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { CompassSelector } from './CompassSelector';
 import L from 'leaflet';
@@ -66,7 +66,6 @@ export function AddCragForm({ onClose, onSubmit, initialLat, initialLng }: AddCr
   const [name, setName] = useState('');
   const [latitude, setLatitude] = useState(initialLat?.toString() || '');
   const [longitude, setLongitude] = useState(initialLng?.toString() || '');
-  const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat || 60.035226, initialLng || 11.048964]);
   const [aspect, setAspect] = useState<number | null>(null);
   const [rockType, setRockType] = useState('');
   const [climbingTypes, setClimbingTypes] = useState<string[]>([]);
@@ -85,6 +84,8 @@ export function AddCragForm({ onClose, onSubmit, initialLat, initialLng }: AddCr
     latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))
       ? [parseFloat(latitude), parseFloat(longitude)]
       : null;
+
+  const mapCenter: [number, number] = markerPosition ?? [initialLat || 60.035226, initialLng || 11.048964];
 
   const handleClimbingTypeToggle = (type: string) => {
     setClimbingTypes(prev =>

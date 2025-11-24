@@ -12,8 +12,8 @@ export function ScoreBadge({ label, score, type = 'friction' }: ScoreBadgeProps)
       return 'bg-red-50 text-red-700 border-red-200';
     }
 
-    if (score >= 75) return 'bg-green-50 text-green-700 border-green-200';
-    if (score >= 50) return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (score >= 85) return 'bg-green-50 text-green-700 border-green-200';
+    if (score >= 60) return 'bg-amber-50 text-amber-700 border-amber-200';
     return 'bg-red-50 text-red-700 border-red-200';
   };
 

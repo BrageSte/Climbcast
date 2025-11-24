@@ -1,14 +1,11 @@
 import { Clock, TrendingUp, AlertCircle } from 'lucide-react';
-import { CragListItem } from '../components/CragListItem';
 import { FavoritesSection } from '../components/FavoritesSection';
-import { useBestCragsNow } from '../hooks/useBestCragsNow';
 import { useBestCragsLaterToday } from '../hooks/useBestCragsLaterToday';
 import { useHomeData } from '../hooks/useHomeData';
 import { useNavigate } from 'react-router-dom';
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { data: bestNow, isLoading: loadingBestNow } = useBestCragsNow();
   const { data: laterToday, isLoading: loadingLater } = useBestCragsLaterToday();
   const { heroCards, favoriteCragCards } = useHomeData();
 

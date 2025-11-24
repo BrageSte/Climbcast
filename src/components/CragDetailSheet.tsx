@@ -8,7 +8,6 @@ import { WindDirectionIndicator } from './WindDirectionIndicator';
 import { FrictionScoreDisplay } from './FrictionScoreDisplay';
 import { WetnessIndicator } from './WetnessIndicator';
 import { EditCragModal } from './EditCragModal';
-import { AspectDisplay } from './AspectDisplay';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSubmitChangeRequest } from '../hooks/useChangeRequests';
 
@@ -18,19 +17,6 @@ interface CragDetailSheetProps {
   weatherHistory: HourPoint[];
   onClose: () => void;
   onExpand: () => void;
-}
-
-function getFrictionBadgeColor(label: string): string {
-  switch (label) {
-    case 'Perfect':
-      return 'bg-green-500 text-white';
-    case 'OK':
-      return 'bg-yellow-500 text-white';
-    case 'Poor':
-      return 'bg-red-500 text-white';
-    default:
-      return 'bg-gray-500 text-white';
-  }
 }
 
 export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose, onExpand }: CragDetailSheetProps) {
