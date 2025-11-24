@@ -88,3 +88,19 @@ export interface METResponse {
     timeseries: METTimeseries[];
   };
 }
+
+export interface HomeCragSummary {
+  id: string;
+  name: string;
+  region: string;
+  wetnessScore: number;
+  frictionScore: number;
+  summary: string;
+}
+
+export interface TimeWindowSuggestion {
+  cragName: string;
+  timeWindow: string;
+  summary: string;
+  cragId: string;
+}
