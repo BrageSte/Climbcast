@@ -5,14 +5,14 @@ interface FrictionScoreDisplayProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return 'from-green-500 to-green-600';
-  if (score >= 40) return 'from-yellow-500 to-yellow-600';
+  if (score >= 85) return 'from-green-500 to-green-600';
+  if (score >= 60) return 'from-yellow-500 to-yellow-600';
   return 'from-red-500 to-red-600';
 }
 
 function getScoreTextColor(score: number): string {
-  if (score >= 70) return 'text-green-600';
-  if (score >= 40) return 'text-yellow-600';
+  if (score >= 85) return 'text-green-600';
+  if (score >= 60) return 'text-yellow-600';
   return 'text-red-600';
 }
 

@@ -259,7 +259,7 @@ function calculateAspectFromElevationGrid(
     };
   }
 
-  let aspectRad = Math.atan2(dz_dy, -dz_dx);
+  const aspectRad = Math.atan2(dz_dy, -dz_dx);
   let slopeDirection = (90 - toDegrees(aspectRad)) % 360;
   if (slopeDirection < 0) {
     slopeDirection += 360;

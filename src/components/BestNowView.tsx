@@ -2,7 +2,7 @@ import { Thermometer, Droplets, Mountain } from 'lucide-react';
 import { useMemo } from 'react';
 import type { Crag, HourPoint } from '../types';
 import { computeFriction } from '../utils/frictionCalculator';
-import { FilterPanel, type FilterOptions } from './FilterPanel';
+import { FilterPanel } from './FilterPanel';
 import { useBestNowFilters } from '../hooks/useBestNowFilters';
 
 interface BestNowViewProps {
@@ -52,11 +52,11 @@ export function BestNowView({ crags, weatherData, onCragSelect }: BestNowViewPro
       })
       .filter((item): item is CragWithScore => item !== null)
       .sort((a, b) => {
-        if (a.label === 'Perfect' && b.label !== 'Perfect') return -1;
-        if (a.label !== 'Perfect' && b.label === 'Perfect') return 1;
-        if (a.label === 'OK' && b.label === 'Poor') return -1;
-        if (a.label === 'Poor' && b.label === 'OK') return 1;
-        return b.score - a.score;
+        const scoreDiff = b.score - a.score;
+        if (scoreDiff !== 0) return scoreDiff;
+
+        const labelOrder = { Perfect: 2, OK: 1, Poor: 0 } as const;
+        return labelOrder[b.label] - labelOrder[a.label];
       });
   }, [crags, weatherData]);
 
