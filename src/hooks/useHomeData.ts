@@ -1,51 +1,73 @@
 import { useMemo } from 'react';
+import { useCrags } from './useCrags';
 import type { HeroCard, FavoriteCragCard, WatchlistCragCard } from '../types';
 
 export function useHomeData() {
-  const heroCards = useMemo<HeroCard[]>(() => [
-    {
-      id: '1',
-      type: 'best-now',
-      title: 'Beste forhold nå',
-      subtitle: 'Dine klatreforhold i dag',
-      cragName: 'Kolsås',
-      cragId: '1',
-      location: 'Kolsås',
-      region: 'Oslo',
-      score: 92,
-      temperature: 18,
-      wind: '3 m/s',
-      humidity: 62,
-      statusLabel: 'Tørr',
-      reliability: 'high'
-    },
-    {
-      id: '2',
-      type: 'project-update',
-      title: 'Gode forhold snart',
-      subtitle: 'Hold øye med vindskifte',
-      cragName: 'Siurana',
-      cragId: '2',
-      timeWindow: '26–28 nov',
-      location: 'Siurana',
-      region: 'Catalonia, Spain',
-      score: 89,
-      temperature: 16,
-      wind: '5 m/s',
-      humidity: 55,
-      statusLabel: 'Tørr',
-      reliability: 'medium',
-      timeframeLabel: 'Nærmeste 3 dager'
-    }
-  ], []);
+  const { data: crags = [], isLoading, error } = useCrags();
 
-  const favoriteCragCards = useMemo<FavoriteCragCard[]>(() => [
+  const heroCards = useMemo<HeroCard[]>(() => {
+    const heroTemplates = [
+      {
+        id: 'hero-1',
+        type: 'best-now' as const,
+        title: 'Beste forhold nå',
+        subtitle: 'Dine klatreforhold i dag',
+        cragName: 'Kolsås',
+        location: 'Kolsås',
+        region: 'Oslo',
+        score: 92,
+        temperature: 18,
+        wind: '3 m/s',
+        humidity: 62,
+        statusLabel: 'Tørr',
+        reliability: 'high' as const
+      },
+      {
+        id: 'hero-2',
+        type: 'project-update' as const,
+        title: 'Gode forhold snart',
+        subtitle: 'Hold øye med vindskifte',
+        cragName: 'Siurana',
+        timeWindow: '26–28 nov',
+        location: 'Siurana',
+        region: 'Catalonia, Spain',
+        score: 89,
+        temperature: 16,
+        wind: '5 m/s',
+        humidity: 55,
+        statusLabel: 'Tørr',
+        reliability: 'medium' as const,
+        timeframeLabel: 'Nærmeste 3 dager'
+      }
+    ];
+
+    return heroTemplates
+      .map((template, index) => {
+        const matchedCrag =
+          crags.find((crag) => crag.name.toLowerCase() === template.cragName?.toLowerCase()) ??
+          crags[index];
+
+        const cragId = matchedCrag?.id;
+
+        return {
+          ...template,
+          id: cragId ?? template.id,
+          cragId,
+          cragName: matchedCrag?.name ?? template.cragName,
+          location: matchedCrag?.name ?? template.location,
+          region: matchedCrag?.region ?? template.region
+        } satisfies HeroCard;
+      })
+      .filter((card): card is HeroCard => Boolean(card.cragId));
+  }, [crags]);
+
+  const favoriteTemplates = [
     {
-      id: '1',
+      id: 'fav-1',
       name: 'Kolsås',
       region: 'Oslo',
       frictionScore: 85,
-      trend: 'up',
+      trend: 'up' as const,
       isWet: false,
       wetnessScore: 18,
       windDirection: 270,
@@ -58,11 +80,11 @@ export function useHomeData() {
       statusNote: 'Høy pålitelighet'
     },
     {
-      id: '2',
+      id: 'fav-2',
       name: 'Hellerud',
       region: 'Oslo',
       frictionScore: 78,
-      trend: 'same',
+      trend: 'same' as const,
       isWet: false,
       wetnessScore: 24,
       windDirection: 90,
@@ -75,11 +97,11 @@ export function useHomeData() {
       statusNote: 'Stabile forhold'
     },
     {
-      id: '3',
+      id: 'fav-3',
       name: 'Kampen',
       region: 'Oslo',
       frictionScore: 72,
-      trend: 'down',
+      trend: 'down' as const,
       isWet: false,
       wetnessScore: 32,
       windDirection: 180,
@@ -91,36 +113,74 @@ export function useHomeData() {
       nextWindow: '16:00',
       statusNote: 'Lettere trekk'
     }
-  ], []);
+  ];
 
-  const watchlistCrags = useMemo<WatchlistCragCard[]>(() => [
-    {
-      id: '4',
-      name: 'Siurana',
-      region: 'Catalonia, Spain',
-      statusNote: 'Svært tørr de neste dagene',
-      frictionScore: 88,
-      temperature: 19,
-      wind: '5 m/s',
-      nextWindow: 'Nærmeste 3 dager'
-    },
-    {
-      id: '5',
-      name: 'Kalymnos',
-      region: 'Dodekanesane, Hellas',
-      statusNote: 'Bedre kveldsforhold etter 18:00',
-      frictionScore: 82,
-      temperature: 21,
-      wind: '4 m/s',
-      nextWindow: 'Etter 18:00'
-    }
-  ], []);
+  const favoriteCragCards = useMemo<FavoriteCragCard[]>(() => {
+    return favoriteTemplates
+      .map((template, index) => {
+        const matchedCrag =
+          crags.find((crag) => crag.name.toLowerCase() === template.name.toLowerCase()) ??
+          crags[index];
+
+        const cragId = matchedCrag?.id;
+
+        return {
+          ...template,
+          id: cragId ?? template.id,
+          name: matchedCrag?.name ?? template.name,
+          region: matchedCrag?.region ?? template.region,
+        } satisfies FavoriteCragCard;
+      })
+      .filter((card): card is FavoriteCragCard => Boolean(card.id && crags.some((crag) => crag.id === card.id)));
+  }, [crags]);
+
+  const watchlistCrags = useMemo<WatchlistCragCard[]>(() => {
+    const watchlistTemplates = [
+      {
+        id: 'watch-1',
+        name: 'Siurana',
+        region: 'Catalonia, Spain',
+        statusNote: 'Svært tørr de neste dagene',
+        frictionScore: 88,
+        temperature: 19,
+        wind: '5 m/s',
+        nextWindow: 'Nærmeste 3 dager'
+      },
+      {
+        id: 'watch-2',
+        name: 'Kalymnos',
+        region: 'Dodekanesane, Hellas',
+        statusNote: 'Bedre kveldsforhold etter 18:00',
+        frictionScore: 82,
+        temperature: 21,
+        wind: '4 m/s',
+        nextWindow: 'Etter 18:00'
+      }
+    ];
+
+    return watchlistTemplates
+      .map((template, index) => {
+        const matchedCrag =
+          crags.find((crag) => crag.name.toLowerCase() === template.name.toLowerCase()) ??
+          crags[index + favoriteTemplates.length];
+
+        const cragId = matchedCrag?.id;
+
+        return {
+          ...template,
+          id: cragId ?? template.id,
+          name: matchedCrag?.name ?? template.name,
+          region: matchedCrag?.region ?? template.region,
+        } satisfies WatchlistCragCard;
+      })
+      .filter((card): card is WatchlistCragCard => Boolean(card.id && crags.some((crag) => crag.id === card.id)));
+  }, [crags]);
 
   return {
     heroCards,
     favoriteCragCards,
     watchlistCrags,
-    isLoading: false,
-    error: undefined
+    isLoading,
+    error
   };
 }

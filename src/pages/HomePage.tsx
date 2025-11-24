@@ -17,9 +17,16 @@ import { useNavigate } from 'react-router-dom';
 export function HomePage() {
   const navigate = useNavigate();
   const { data: laterToday, isLoading: loadingLater } = useBestCragsLaterToday();
-  const { heroCards, favoriteCragCards, watchlistCrags } = useHomeData();
+  const {
+    heroCards,
+    favoriteCragCards,
+    watchlistCrags,
+    isLoading: loadingHome,
+    error: homeError
+  } = useHomeData();
 
   const handleCragClick = (cragId: string) => {
+    if (!cragId) return;
     navigate(`/explore?crag=${cragId}`);
   };
 
@@ -80,71 +87,100 @@ export function HomePage() {
         </header>
 
         <section className="grid md:grid-cols-[1.2fr_0.9fr] gap-3">
-          {heroCards.map((card) => (
-            <button
-              key={card.id}
-              onClick={() => card.cragId && handleCragClick(card.cragId)}
-              className={`w-full text-left rounded-3xl border shadow-sm transition-all hover:shadow-md ${
-                card.type === 'best-now'
-                  ? 'bg-gradient-to-br from-[#e8f2ff] via-white to-[#f7fbff] border-blue-100'
-                  : 'bg-white border-slate-200'
-              }`}
-            >
-              <div className="p-5 space-y-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm border border-slate-200">
-                      {getHeroCardIcon(card.type)}
-                      <span>{card.title}</span>
+          {loadingHome ? (
+            <div className="md:col-span-2 grid md:grid-cols-[1.2fr_0.9fr] gap-3">
+              {[1, 2].map((idx) => (
+                <div key={idx} className="h-52 rounded-3xl bg-white border border-slate-200 p-5 animate-pulse" />
+              ))}
+            </div>
+          ) : homeError ? (
+            <div className="md:col-span-2 bg-white border border-rose-200 text-rose-700 rounded-2xl p-4 flex items-center gap-2">
+              <AlertCircle size={18} />
+              <p>Kunne ikke laste crag-data: {homeError.message}</p>
+            </div>
+          ) : heroCards.length > 0 ? (
+            heroCards.map((card) => (
+              <button
+                key={card.id}
+                onClick={() => card.cragId && handleCragClick(card.cragId)}
+                className={`w-full text-left rounded-3xl border shadow-sm transition-all hover:shadow-md ${
+                  card.type === 'best-now'
+                    ? 'bg-gradient-to-br from-[#e8f2ff] via-white to-[#f7fbff] border-blue-100'
+                    : 'bg-white border-slate-200'
+                }`}
+              >
+                <div className="p-5 space-y-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm border border-slate-200">
+                        {getHeroCardIcon(card.type)}
+                        <span>{card.title}</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-slate-900">{card.location}</h3>
+                        <p className="text-sm text-slate-500">{card.region}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-slate-900">{card.location}</h3>
-                      <p className="text-sm text-slate-500">{card.region}</p>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-inner">
+                        <span className="text-2xl font-bold">{card.score}</span>
+                      </div>
+                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                        {card.statusLabel}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-inner">
-                      <span className="text-2xl font-bold">{card.score}</span>
+                  <div className="grid grid-cols-3 gap-3 text-sm text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <Thermometer size={16} className="text-rose-500" />
+                      <span>{card.temperature}°C</span>
                     </div>
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                      {card.statusLabel}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <Wind size={16} className="text-blue-600" />
+                      <span>{card.wind}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Droplets size={16} className="text-sky-600" />
+                      <span>{card.humidity}%</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-slate-600">
+                    <span>{card.subtitle}</span>
+                    <div className="flex items-center gap-2 text-blue-700 font-semibold">
+                      {card.timeWindow || card.timeframeLabel}
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1 w-fit">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    {reliabilityLabel(card.reliability)}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-sm text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <Thermometer size={16} className="text-rose-500" />
-                    <span>{card.temperature}°C</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Wind size={16} className="text-blue-600" />
-                    <span>{card.wind}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Droplets size={16} className="text-sky-600" />
-                    <span>{card.humidity}%</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm text-slate-600">
-                  <span>{card.subtitle}</span>
-                  <div className="flex items-center gap-2 text-blue-700 font-semibold">
-                    {card.timeWindow || card.timeframeLabel}
-                    <ArrowRight size={16} />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1 w-fit">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  {reliabilityLabel(card.reliability)}
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            ))
+          ) : (
+            <div className="md:col-span-2 bg-white border border-slate-200 text-center p-6 rounded-3xl text-slate-600">
+              Ingen crags tilgjengelig akkurat nå. Prøv å legge til noen i databasen din.
+            </div>
+          )}
         </section>
 
-        <FavoritesSection
-          favorites={favoriteCragCards}
-          onCragClick={handleCragClick}
-        />
+        {loadingHome ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[1, 2, 3].map((idx) => (
+              <div key={idx} className="h-36 rounded-2xl bg-white border border-slate-200 p-4 animate-pulse" />
+            ))}
+          </div>
+        ) : homeError ? null : favoriteCragCards.length > 0 ? (
+          <FavoritesSection
+            favorites={favoriteCragCards}
+            onCragClick={handleCragClick}
+          />
+        ) : (
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 text-slate-600 text-center">
+            Ingen favoritter tilgjengelig.
+          </div>
+        )}
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -155,40 +191,55 @@ export function HomePage() {
             <button className="text-blue-700 text-sm font-semibold hover:underline">Legg til</button>
           </div>
           <div className="space-y-3">
-            {watchlistCrags.map((crag) => (
-              <button
-                key={crag.id}
-                onClick={() => handleCragClick(crag.id)}
-                className="w-full bg-white rounded-2xl border border-slate-200 p-4 text-left shadow-sm hover:shadow-md transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-blue-700">{crag.region}</p>
-                    <h3 className="text-base font-semibold text-slate-900">{crag.name}</h3>
-                    <p className="text-sm text-slate-600">{crag.statusNote}</p>
-                    <div className="inline-flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
-                      <Clock size={14} />
-                      <span>{crag.nextWindow}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-inner">
-                      <span className="text-xl font-bold">{crag.frictionScore}</span>
-                    </div>
-                    <div className="text-sm text-slate-600 space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Thermometer size={14} className="text-rose-500" />
-                        <span>{crag.temperature}°C</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Wind size={14} className="text-blue-600" />
-                        <span>{crag.wind}</span>
+            {loadingHome ? (
+              [1, 2].map((idx) => (
+                <div key={idx} className="h-28 rounded-2xl bg-white border border-slate-200 p-4 animate-pulse" />
+              ))
+            ) : homeError ? (
+              <div className="bg-white border border-rose-200 text-rose-700 rounded-2xl p-4 flex items-center gap-2">
+                <AlertCircle size={18} />
+                <p>Kunne ikke laste overvåkede felt.</p>
+              </div>
+            ) : watchlistCrags.length > 0 ? (
+              watchlistCrags.map((crag) => (
+                <button
+                  key={crag.id}
+                  onClick={() => handleCragClick(crag.id)}
+                  className="w-full bg-white rounded-2xl border border-slate-200 p-4 text-left shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-blue-700">{crag.region}</p>
+                      <h3 className="text-base font-semibold text-slate-900">{crag.name}</h3>
+                      <p className="text-sm text-slate-600">{crag.statusNote}</p>
+                      <div className="inline-flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
+                        <Clock size={14} />
+                        <span>{crag.nextWindow}</span>
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-inner">
+                        <span className="text-xl font-bold">{crag.frictionScore}</span>
+                      </div>
+                      <div className="text-sm text-slate-600 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <Thermometer size={14} className="text-rose-500" />
+                          <span>{crag.temperature}°C</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Wind size={14} className="text-blue-600" />
+                          <span>{crag.wind}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 text-center text-slate-600">
+                Ingen overvåkede felt tilgjengelig.
+              </div>
+            )}
           </div>
         </section>
 
