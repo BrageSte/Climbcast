@@ -33,12 +33,13 @@ export function SevenDayForecast({ days, cragName, onClose, onDaySelect, selecte
           </div>
 
           <div className="px-3 sm:px-6 py-4 space-y-4">
-            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+            <div className="space-y-3">
               {days.slice(0, 7).map((day) => (
                 <DayCard
                   key={day.date}
                   day={day}
                   onClick={() => onDaySelect(day)}
+                  isSelected={selectedDay?.date === day.date}
                 />
               ))}
             </div>
