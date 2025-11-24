@@ -1,47 +1,123 @@
-import { Star, ChevronRight } from 'lucide-react';
-import { useFavorites } from '../hooks/useFavorites';
-import type { Crag } from '../types';
+import { TrendingUp, TrendingDown, Minus, ChevronRight, Droplet } from 'lucide-react';
+import type { FavoriteCragCard } from '../types';
 
 interface FavoritesSectionProps {
-  crags: Crag[];
-  onCragSelect: (crag: Crag) => void;
+  favorites: FavoriteCragCard[];
+  onCragClick: (cragId: string) => void;
 }
 
-export function FavoritesSection({ crags, onCragSelect }: FavoritesSectionProps) {
-  const { favorites, isLoading } = useFavorites();
+export function FavoritesSection({ favorites, onCragClick }: FavoritesSectionProps) {
+  const getTrendIcon = (trend: 'up' | 'same' | 'down') => {
+    switch (trend) {
+      case 'up':
+        return <TrendingUp size={16} className="text-green-600" />;
+      case 'down':
+        return <TrendingDown size={16} className="text-red-600" />;
+      default:
+        return <Minus size={16} className="text-gray-400" />;
+    }
+  };
 
-  const favoriteCrags = crags.filter(crag => favorites.includes(crag.id));
+  const getFrictionColor = (score: number) => {
+    if (score >= 75) return 'text-green-600';
+    if (score >= 50) return 'text-amber-600';
+    return 'text-red-600';
+  };
 
-  if (isLoading || favoriteCrags.length === 0) {
+  const getWetnessColor = (score: number) => {
+    if (score <= 30) return 'text-green-600';
+    if (score <= 60) return 'text-amber-600';
+    return 'text-red-600';
+  };
+
+  const calculateWindImpact = (windDir: number, wallAspect: number | null) => {
+    if (wallAspect === null) return 0;
+    const diff = Math.abs(windDir - wallAspect);
+    const normalizedDiff = diff > 180 ? 360 - diff : diff;
+    return Math.cos((normalizedDiff * Math.PI) / 180);
+  };
+
+  if (favorites.length === 0) {
     return null;
   }
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-[999] pointer-events-none">
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 pointer-events-auto max-w-4xl mx-auto">
-        <div className="flex items-center gap-2 mb-3">
-          <Star size={18} className="text-yellow-500 fill-yellow-500" />
-          <h3 className="font-semibold text-gray-900">Favorites</h3>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-          {favoriteCrags.map((crag) => (
+    <div>
+      <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Favorites</h2>
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+        {favorites.map((crag) => {
+          const windImpact = calculateWindImpact(crag.windDirection, crag.wallAspect);
+          const isWindOnWall = windImpact > 0.5;
+
+          return (
             <button
               key={crag.id}
-              onClick={() => onCragSelect(crag)}
-              className="flex-shrink-0 snap-start bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl p-3 transition-all border border-blue-200 hover:border-blue-300 min-w-[200px] group"
+              onClick={() => onCragClick(crag.id)}
+              className="flex-shrink-0 w-64 bg-white p-4 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all snap-start"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 text-left">
-                  <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-1">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-gray-900 truncate">
                     {crag.name}
-                  </h4>
-                  <p className="text-xs text-gray-600 line-clamp-1">{crag.region}</p>
+                  </h3>
                 </div>
-                <ChevronRight size={16} className="text-blue-600 flex-shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="text-gray-400 flex-shrink-0 ml-2" size={20} />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Friction</div>
+                    <div className={`text-2xl font-bold ${getFrictionColor(crag.frictionScore)}`}>
+                      {crag.frictionScore}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {getTrendIcon(crag.trend)}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <Droplet
+                      size={16}
+                      className={getWetnessColor(crag.wetnessScore)}
+                      fill={crag.isWet ? 'currentColor' : 'none'}
+                    />
+                    <span className={`text-xs font-medium ${getWetnessColor(crag.wetnessScore)}`}>
+                      {crag.wetnessScore <= 30 ? 'Dry' : crag.wetnessScore <= 60 ? 'Damp' : 'Wet'}
+                    </span>
+                  </div>
+
+                  {crag.wallAspect !== null && (
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className={`${isWindOnWall ? 'text-blue-600' : 'text-gray-400'}`}
+                        style={{ transform: `rotate(${crag.windDirection}deg)` }}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M12 19V5M5 12l7-7 7 7" />
+                        </svg>
+                      </div>
+                      <span className={`text-xs font-medium ${isWindOnWall ? 'text-blue-600' : 'text-gray-400'}`}>
+                        {crag.windSpeed.toFixed(1)} m/s
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -104,3 +104,34 @@ export interface TimeWindowSuggestion {
   summary: string;
   cragId: string;
 }
+
+export interface HeroCard {
+  id: string;
+  type: 'best-now' | 'project-update' | 'alert';
+  title: string;
+  subtitle?: string;
+  cragName?: string;
+  cragId?: string;
+  timeWindow?: string;
+  icon?: string;
+}
+
+export interface FavoriteCragCard {
+  id: string;
+  name: string;
+  frictionScore: number;
+  trend: 'up' | 'same' | 'down';
+  isWet: boolean;
+  wetnessScore: number;
+  windDirection: number;
+  wallAspect: number | null;
+  windSpeed: number;
+}
+
+export interface ProjectCard {
+  id: string;
+  cragName: string;
+  grade: string;
+  goodHoursThisWeek: string;
+  frictionForecast: number[];
+}
