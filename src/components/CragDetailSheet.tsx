@@ -1,6 +1,6 @@
 import { X, Wind, Droplets, Thermometer, Cloud, Star, Edit3, MapPin } from 'lucide-react';
-import { useState, useRef } from 'react';
-import type { Crag, HourPoint } from '../types';
+import { useEffect, useRef, useState } from 'react';
+import type { Crag, DayAggregate, HourPoint } from '../types';
 import { computeFriction } from '../utils/frictionCalculator';
 import { calculateWetnessScore } from '../utils/wetnessCalculator';
 import { RockTypeInfo } from './RockTypeInfo';
@@ -8,16 +8,19 @@ import { WindDirectionIndicator } from './WindDirectionIndicator';
 import { EditCragModal } from './EditCragModal';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSubmitChangeRequest } from '../hooks/useChangeRequests';
+import { DayCard } from './DayCard';
+import { DayDetailInline } from './DayDetailInline';
 
 interface CragDetailSheetProps {
   crag: Crag;
   currentWeather: HourPoint | null;
   weatherHistory: HourPoint[];
+  dayAggregates: DayAggregate[];
+  dayHoursMap: Record<string, HourPoint[]>;
   onClose: () => void;
-  onExpand: () => void;
 }
 
-export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose, onExpand }: CragDetailSheetProps) {
+export function CragDetailSheet({ crag, currentWeather, weatherHistory, dayAggregates, dayHoursMap, onClose }: CragDetailSheetProps) {
   const friction = currentWeather ? computeFriction(currentWeather, crag.aspect) : null;
   const wetness = currentWeather && weatherHistory.length > 0
     ? calculateWetnessScore(currentWeather, weatherHistory)
@@ -34,6 +37,7 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'today' | 'week' | 'analyze'>('today');
+  const [selectedDay, setSelectedDay] = useState<DayAggregate | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const submitChangeRequest = useSubmitChangeRequest();
 
@@ -65,8 +69,10 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
     const distance = touchStart - touchEnd;
     const isUpSwipe = distance > minSwipeDistance;
     if (isUpSwipe) {
-      onExpand();
       setActiveTab('week');
+      if (dayAggregates.length > 0) {
+        setSelectedDay(dayAggregates[0]);
+      }
     }
     setTouchStart(null);
     setTouchEnd(null);
@@ -75,15 +81,20 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
   const handleTabSelect = (tab: 'today' | 'week' | 'analyze') => {
     setActiveTab(tab);
 
-    if (tab === 'week') {
-      onExpand();
-      return;
-    }
-
-    if (tab === 'analyze') {
-      window.alert('Analyze Pro kommer snart! Hold utkikk for avansert innsikt.');
+    if (tab === 'week' && dayAggregates.length > 0) {
+      setSelectedDay(prev => prev ?? dayAggregates[0]);
+    } else {
+      setSelectedDay(null);
     }
   };
+
+  const selectedDayHours = selectedDay ? dayHoursMap[selectedDay.date] ?? [] : [];
+
+  useEffect(() => {
+    if (activeTab === 'week' && dayAggregates.length > 0 && !selectedDay) {
+      setSelectedDay(dayAggregates[0]);
+    }
+  }, [activeTab, dayAggregates, selectedDay]);
 
   return (
     <div
@@ -105,17 +116,22 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
         }}
       >
         <div className="flex items-start justify-between mb-4">
-          <div className="flex-1 pr-4 space-y-1">
+          <div className="flex-1 pr-4 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
               <MapPin size={14} />
               <span>{crag.region}</span>
             </div>
             <h2 className="text-xl font-bold text-slate-900">{crag.name}</h2>
-            {crag.description && (
-              <p className="text-sm text-slate-600">{crag.description}</p>
-            )}
-            <div className="mt-3 inline-flex bg-slate-100 rounded-full p-1 gap-1">
+            <div
+              role="tablist"
+              aria-label="Vis værinnhold for craget"
+              className="inline-flex bg-slate-100 rounded-full p-1 gap-1 mt-1"
+            >
               <button
+                id="today-tab"
+                role="tab"
+                aria-controls="today-panel"
+                aria-selected={activeTab === 'today'}
                 type="button"
                 onClick={() => handleTabSelect('today')}
                 className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
@@ -127,6 +143,10 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
                 I dag
               </button>
               <button
+                id="week-tab"
+                role="tab"
+                aria-controls="week-panel"
+                aria-selected={activeTab === 'week'}
                 type="button"
                 onClick={() => handleTabSelect('week')}
                 className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
@@ -134,10 +154,15 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
                     ? 'bg-white shadow-sm text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
+                aria-label="Se 7-dagers utsikt"
               >
                 Uke
               </button>
               <button
+                id="analyze-tab"
+                role="tab"
+                aria-controls="analyze-panel"
+                aria-selected={activeTab === 'analyze'}
                 type="button"
                 onClick={() => handleTabSelect('analyze')}
                 className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
@@ -145,10 +170,14 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
                     ? 'bg-white shadow-sm text-slate-900'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
+                aria-label="Åpne Analyze Pro fanen"
               >
                 Analyze Pro
               </button>
             </div>
+            {crag.description && (
+              <p className="text-sm text-slate-600">{crag.description}</p>
+            )}
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button
@@ -181,8 +210,13 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
           </div>
         )}
 
-        {currentWeather && friction && (
-          <div className="space-y-4 mt-2">
+        {activeTab === 'today' && currentWeather && friction && (
+          <div
+            id="today-panel"
+            role="tabpanel"
+            aria-labelledby="today-tab"
+            className="space-y-4 mt-2"
+          >
             <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-4">
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap gap-2">
@@ -278,17 +312,93 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
               </div>
             </div>
 
-            <div className="flex gap-3 mt-2">
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2"
-              >
-                <Edit3 size={18} />
-                <span>Foreslå endring</span>
-              </button>
+          </div>
+        )}
+
+        {activeTab === 'week' && (
+          <div
+            id="week-panel"
+            role="tabpanel"
+            aria-labelledby="week-tab"
+            className="space-y-4 mt-2"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-slate-900">7-dagers utsikt</h3>
+              <span className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-2.5 py-1">Planlegg turen</span>
+            </div>
+
+            {dayAggregates.length === 0 && (
+              <p className="text-sm text-slate-600">Langtidsvarsler er ikke tilgjengelige for dette craget akkurat nå.</p>
+            )}
+
+            {dayAggregates.length > 0 && (
+              <>
+                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+                  {dayAggregates.slice(0, 7).map(day => (
+                    <DayCard
+                      key={day.date}
+                      day={day}
+                      onClick={() => setSelectedDay(day)}
+                      isActive={selectedDay?.date === day.date}
+                    />
+                  ))}
+                </div>
+
+                {selectedDay && selectedDayHours.length > 0 && (
+                  <DayDetailInline
+                    day={selectedDay}
+                    hours={selectedDayHours}
+                    wallAspect={crag.aspect}
+                    onCollapse={() => setSelectedDay(null)}
+                  />
+                )}
+              </>
+            )}
+
+            <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 border-t border-slate-100 pt-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />Perfect hours cluster
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-amber-700">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />OK conditions
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1">
+                <span className="w-2 h-2 rounded-full bg-slate-300" />Nighttime segments
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">
+                Best window highlights daylight hours optimert for temperatur, fuktighet, vind og skydekke
+              </div>
             </div>
           </div>
         )}
+
+        {activeTab === 'analyze' && (
+          <div
+            id="analyze-panel"
+            role="tabpanel"
+            aria-labelledby="analyze-tab"
+            className="space-y-4 mt-2"
+          >
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900">Analyze Pro</h3>
+              <p className="text-sm text-slate-700 mt-2">
+                Avansert analyse er på vei. Snart kan du sammenligne friksjonstrender, få varsel om best mulige vinduer og eksportere data direkte fra Climbcast.
+              </p>
+              <p className="text-sm text-slate-600 mt-2">Hold utkikk – vi bygger dette nå!</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={() => setShowEditModal(true)}
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2"
+            aria-label="Foreslå en endring for craget"
+          >
+            <Edit3 size={18} />
+            <span>Foreslå endring</span>
+          </button>
+        </div>
 
         {showEditModal && (
           <EditCragModal

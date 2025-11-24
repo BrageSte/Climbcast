@@ -3,13 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { Map as MapComponent } from '../components/Map';
 import { SearchBar } from '../components/SearchBar';
 import { CragDetailSheet } from '../components/CragDetailSheet';
-import { SevenDayForecast } from '../components/SevenDayForecast';
 import { AddCragForm } from '../components/AddCragForm';
 import { useCrags } from '../hooks/useCrags';
 import { useWeather } from '../hooks/useWeather';
 import { useAddCrag } from '../hooks/useAddCrag';
 import { groupHoursByDay, aggregateDay } from '../utils/dayAggregator';
-import type { Crag, DayAggregate } from '../types';
+import type { Crag, HourPoint } from '../types';
 import { format } from 'date-fns';
 
 export function ExplorePage() {
@@ -24,8 +23,6 @@ export function ExplorePage() {
     return crags.find(c => c.id === cragIdFromUrl) || null;
   }, [cragIdFromUrl, crags]);
 
-  const [showForecast, setShowForecast] = useState(false);
-  const [selectedForecastDay, setSelectedForecastDay] = useState<DayAggregate | null>(null);
   const [showAddCragForm, setShowAddCragForm] = useState(false);
 
   const { data: weatherData } = useWeather(
@@ -33,10 +30,14 @@ export function ExplorePage() {
     selectedCrag?.longitude ?? 11.048964
   );
 
+  const dayGroups = useMemo(() => {
+    if (!weatherData) return [];
+    return groupHoursByDay(weatherData.hours);
+  }, [weatherData]);
+
   const dayAggregates = useMemo(() => {
     if (!weatherData || !selectedCrag) return [];
 
-    const dayGroups = groupHoursByDay(weatherData.hours);
     return dayGroups.map(hours => {
       const date = format(new Date(hours[0].time), 'yyyy-MM-dd');
       const sunData = weatherData.sunriseSunset.get(date);
@@ -47,36 +48,27 @@ export function ExplorePage() {
         sunData?.sunset ?? null
       );
     });
-  }, [weatherData, selectedCrag]);
+  }, [weatherData, selectedCrag, dayGroups]);
+
+  const dayHoursMap = useMemo(() => {
+    const map: Record<string, HourPoint[]> = {};
+
+    dayGroups.forEach(hours => {
+      const date = new Date(hours[0].time).toISOString().split('T')[0];
+      map[date] = hours;
+    });
+
+    return map;
+  }, [dayGroups]);
 
   const currentWeather = weatherData?.hours[0] ?? null;
 
-  const selectedForecastDayHours = useMemo(() => {
-    if (!selectedForecastDay || !weatherData) return [];
-
-    const dayGroups = groupHoursByDay(weatherData.hours);
-    const dayGroup = dayGroups.find(hours => {
-      const firstHour = new Date(hours[0].time);
-      return firstHour.toISOString().split('T')[0] === selectedForecastDay.date;
-    });
-
-    return dayGroup ?? [];
-  }, [selectedForecastDay, weatherData]);
-
   const handleCragSelect = (crag: Crag) => {
     setSearchParams({ crag: crag.id });
-    setShowForecast(false);
-    setSelectedForecastDay(null);
   };
 
   const handleClose = () => {
     setSearchParams({});
-    setShowForecast(false);
-    setSelectedForecastDay(null);
-  };
-
-  const handleDaySelect = (day: DayAggregate | null) => {
-    setSelectedForecastDay(day);
   };
 
   const handleAddCrag = async (cragData: Parameters<typeof addCragMutation.mutateAsync>[0]) => {
@@ -107,28 +99,14 @@ export function ExplorePage() {
         onCragSelect={handleCragSelect}
       />
 
-      {selectedCrag && !showForecast && (
+      {selectedCrag && (
         <CragDetailSheet
           crag={selectedCrag}
           currentWeather={currentWeather}
           weatherHistory={weatherData?.hours ?? []}
+          dayAggregates={dayAggregates}
+          dayHoursMap={dayHoursMap}
           onClose={handleClose}
-          onExpand={() => setShowForecast(true)}
-        />
-      )}
-
-      {selectedCrag && showForecast && (
-        <SevenDayForecast
-          days={dayAggregates}
-          cragName={selectedCrag.name}
-          onClose={() => {
-            setShowForecast(false);
-            setSelectedForecastDay(null);
-          }}
-          onDaySelect={handleDaySelect}
-          selectedDay={selectedForecastDay}
-          selectedDayHours={selectedForecastDayHours}
-          wallAspect={selectedCrag?.aspect ?? null}
         />
       )}
 
