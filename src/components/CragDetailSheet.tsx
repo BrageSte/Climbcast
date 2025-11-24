@@ -1,4 +1,4 @@
-import { X, Wind, Droplets, Thermometer, Cloud, ChevronUp, Star, Edit3, MapPin } from 'lucide-react';
+import { X, Wind, Droplets, Thermometer, Cloud, Star, Edit3, MapPin } from 'lucide-react';
 import { useState, useRef } from 'react';
 import type { Crag, HourPoint } from '../types';
 import { computeFriction } from '../utils/frictionCalculator';
@@ -33,6 +33,7 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'today' | 'week' | 'analyze'>('today');
   const sheetRef = useRef<HTMLDivElement>(null);
   const submitChangeRequest = useSubmitChangeRequest();
 
@@ -65,9 +66,23 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
     const isUpSwipe = distance > minSwipeDistance;
     if (isUpSwipe) {
       onExpand();
+      setActiveTab('week');
     }
     setTouchStart(null);
     setTouchEnd(null);
+  };
+
+  const handleTabSelect = (tab: 'today' | 'week' | 'analyze') => {
+    setActiveTab(tab);
+
+    if (tab === 'week') {
+      onExpand();
+      return;
+    }
+
+    if (tab === 'analyze') {
+      window.alert('Analyze Pro kommer snart! Hold utkikk for avansert innsikt.');
+    }
   };
 
   return (
@@ -99,6 +114,41 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
             {crag.description && (
               <p className="text-sm text-slate-600">{crag.description}</p>
             )}
+            <div className="mt-3 inline-flex bg-slate-100 rounded-full p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => handleTabSelect('today')}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
+                  activeTab === 'today'
+                    ? 'bg-white shadow-sm text-slate-900'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                I dag
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabSelect('week')}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
+                  activeTab === 'week'
+                    ? 'bg-white shadow-sm text-slate-900'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Uke
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabSelect('analyze')}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${
+                  activeTab === 'analyze'
+                    ? 'bg-white shadow-sm text-slate-900'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Analyze Pro
+              </button>
+            </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button
@@ -231,17 +281,10 @@ export function CragDetailSheet({ crag, currentWeather, weatherHistory, onClose,
             <div className="flex gap-3 mt-2">
               <button
                 onClick={() => setShowEditModal(true)}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2"
               >
                 <Edit3 size={18} />
                 <span>Foreslå endring</span>
-              </button>
-              <button
-                onClick={onExpand}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-2xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-              >
-                <span>7-dagers</span>
-                <ChevronUp size={20} />
               </button>
             </div>
           </div>
