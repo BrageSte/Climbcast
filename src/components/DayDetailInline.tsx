@@ -55,6 +55,36 @@ export function DayDetailInline({ day, hours, wallAspect, onCollapse }: DayDetai
     return format(time, 'HH:mm');
   };
 
+  const sortedHours = [...hours].sort(
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+  );
+
+  const hoursByHour = new Map<number, HourPoint>();
+  sortedHours.forEach(hour => {
+    const hourNumber = new Date(hour.time).getHours();
+    hoursByHour.set(hourNumber, hour);
+  });
+
+  const heatbarByHour = new Map(day.heatbar.map(entry => [entry.hour, entry]));
+
+  const paddedHours = Array.from({ length: 24 }, (_, hour) => {
+    const hourPoint = hoursByHour.get(hour) ?? null;
+    const fallbackTime = new Date(day.date);
+    fallbackTime.setHours(hour, 0, 0, 0);
+    const timeValue = hourPoint?.time ?? fallbackTime.toISOString();
+    const heatbarEntry = heatbarByHour.get(hour);
+
+    return {
+      hour,
+      timeValue,
+      hourPoint,
+      isDaylight: heatbarEntry?.isDaylight ?? false,
+      quality: heatbarEntry?.quality,
+    };
+  });
+
+  const firstDaylightIndex = paddedHours.findIndex(hour => hour.isDaylight);
+
   useEffect(() => {
     if (firstDaylightRef.current && scrollContainerRef.current) {
       const container = scrollContainerRef.current;
@@ -62,7 +92,7 @@ export function DayDetailInline({ day, hours, wallAspect, onCollapse }: DayDetai
       const offset = element.offsetLeft - container.offsetLeft - 16;
       container.scrollLeft = offset;
     }
-  }, []);
+  }, [firstDaylightIndex]);
 
   return (
     <div className="w-full bg-white border border-slate-100 rounded-3xl shadow-xl p-4 sm:p-5 animate-slide-down">
@@ -149,28 +179,34 @@ export function DayDetailInline({ day, hours, wallAspect, onCollapse }: DayDetai
               <span className="text-[11px] text-slate-500">Scroll to explore</span>
             </div>
             <div ref={scrollContainerRef} className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {hours.map((hour, index) => {
-                const friction = computeFriction(hour, wallAspect);
-                const isDaylight = day.heatbar[index]?.isDaylight ?? false;
-                const isFirstDaylight = isDaylight && (index === 0 || !(day.heatbar[index - 1]?.isDaylight ?? false));
+              {paddedHours.map((hour, index) => {
+                const friction = hour.hourPoint ? computeFriction(hour.hourPoint, wallAspect) : null;
+                const isDaylight = hour.isDaylight;
+                const isFirstDaylight = index === firstDaylightIndex;
                 const scoreColor =
-                  friction.score >= 0.7 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                  friction.score >= 0.4 ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                  'bg-rose-50 text-rose-700 border-rose-100';
+                  friction?.score >= 0.7 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                  friction?.score >= 0.4 ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                  'bg-slate-50 text-slate-400 border-slate-200';
 
                 return (
                   <div
-                    key={hour.time}
+                    key={hour.timeValue}
                     ref={isFirstDaylight ? firstDaylightRef : null}
                     className={`min-w-[150px] rounded-2xl border ${isDaylight ? 'bg-white' : 'bg-slate-50'} p-3 shadow-sm flex flex-col gap-2`}
                   >
                     <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span className="font-semibold text-slate-900">{String(index).padStart(2, '0')}:00</span>
+                      <span className="font-semibold text-slate-900">{format(new Date(hour.timeValue), 'HH:mm')}</span>
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border ${scoreColor}`}>
-                        <span className={`w-2 h-2 rounded-full ${getHeatbarColor(day.heatbar[index]?.quality ?? 'unknown', isDaylight)}`} />
-                        {Math.round(friction.score * 100)}
-                        {!friction.hasAspectData && (
-                          <span className="text-amber-600" title="Estimated score">~</span>
+                        <span className={`w-2 h-2 rounded-full ${getHeatbarColor(hour.quality ?? 'unknown', isDaylight)}`} />
+                        {friction ? (
+                          <>
+                            {Math.round(friction.score * 100)}
+                            {!friction.hasAspectData && (
+                              <span className="text-amber-600" title="Estimated score">~</span>
+                            )}
+                          </>
+                        ) : (
+                          '—'
                         )}
                       </span>
                     </div>
@@ -178,21 +214,21 @@ export function DayDetailInline({ day, hours, wallAspect, onCollapse }: DayDetai
                     <div className="flex items-center gap-3 text-[11px] text-slate-700">
                       <span className="inline-flex items-center gap-1">
                         <Thermometer size={14} className="text-orange-500" />
-                        {hour.temperature}°C
+                        {hour.hourPoint ? `${hour.hourPoint.temperature}°C` : '—'}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Droplets size={14} className="text-blue-500" />
-                        {hour.humidity}%
+                        {hour.hourPoint ? `${hour.hourPoint.humidity}%` : '—'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-slate-700">
                       <span className="inline-flex items-center gap-1">
                         <Wind size={14} className="text-emerald-500" />
-                        {hour.windSpeed} m/s
+                        {hour.hourPoint ? `${hour.hourPoint.windSpeed} m/s` : '—'}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Cloud size={14} className="text-slate-500" />
-                        {hour.precipitation}mm
+                        {hour.hourPoint ? `${hour.hourPoint.precipitation}mm` : '—'}
                       </span>
                     </div>
                   </div>
